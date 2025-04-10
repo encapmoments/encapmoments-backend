@@ -2,6 +2,15 @@ const express = require("express");
 const dotenv = require("dotenv");
 const app = express();
 
+
+// 기능 Routes
+const albumRoutes = require('./src/routes/album');
+
+// 미들웨어 Routes
+const authMiddleware = require('./src/middlewares/authMiddleware'); // 토큰 검증 미들웨어
+
+
+
 // 환경변수 로드
 dotenv.config();
 
@@ -9,9 +18,14 @@ dotenv.config();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// 라우터 연결
+
+
+// 토큰 인증이 필요한, 미들웨어 사용하는 라우터
+app.use('/album', authMiddleware, albumRoutes);
+
+
+// 미들웨어 사용 안하는 라우터터
 app.use("/auth", require("./src/routes/auth"));
-app.use("/user", require("./src/routes/album"));
 app.use("/post", require("./src/routes/comment"));
 app.use("/mission", require("./src/routes/mission"));
 app.use("/profile", require("./src/routes/profile"));
