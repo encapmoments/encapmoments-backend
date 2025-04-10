@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>로그인 페이지</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 100px;
+    }
+    .container {
+      width: 300px;
+      margin: auto;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .social-login img {
+      width: 80%;
+      max-width: 200px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    .register-link {
+      margin-top: 15px;
+      display: block;
+      color: #007bff;
+      text-decoration: none;
+    }
+    .register-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>Sign In</h2>
+    <form action="/auth/login" method="POST">
+      <% if (typeof error !== "undefined") { %>
+        <p style="color: red;"><%= error %></p>
+      <% } %>
+      <% if (typeof message !== "undefined") { %>
+        <p style="color: green;"><%= message %></p>
+      <% } %>
+      <input type="email" name="email" placeholder="이메일" required>
+      <input type="password" name="password" placeholder="비밀번호" required>
+      <button type="submit">로그인</button>
+    </form>
+
+    <a href="/register" class="register-link">회원가입 하기</a>
+
+    <h2>SNS Login</h2>
+    <div class="social-login">
+      <a href="<%= naverLoginURL %>">
+        <img src="/static/images/naver_login.png" alt="네이버 로그인"/>
+      </a>
+      <br>
+      <a href="<%= kakaoLoginURL %>">
+        <img src="/static/images/kakao_login.png" alt="카카오 로그인"/>
+      </a>
+    </div>
+  </div>
+
+</body>
+</html>

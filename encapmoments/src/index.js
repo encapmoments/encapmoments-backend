@@ -1,23 +1,51 @@
 const express = require("express");
+const path = require("path");
 const dotenv = require("dotenv");
-const app = express();
+const cookieParser = require("cookie-parser");
+const db = require("./config/db");
 
-// 환경변수 로드
+const authRoutes = require("./routes/authRoutes");
+const socialRoutes = require("./routes/socialRoutes");
+const mainRoutes = require("./routes/mainRoutes");
+const verifyToken = require("./middlewares/authMiddleware");
+
 dotenv.config();
 
-// JSON, form 데이터 파싱
-app.use(express.json());
+const app = express();
+
+// 미들웨어 설정
+app.use(cookieParser());
+app.use("/static", express.static(path.join(__dirname, "public")));
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
 app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
-// 라우터 연결
-app.use("/auth", require("./src/routes/auth"));
-app.use("/user", require("./src/routes/album"));
-app.use("/post", require("./src/routes/comment"));
-app.use("/mission", require("./src/routes/mission"));
-app.use("/profile", require("./src/routes/profile"));
+// 라우터 등록
+app.use("/auth", authRoutes);
+app.use("/naver", socialRoutes);
+app.use("/kakao", socialRoutes);
+app.use("/main", verifyToken, mainRoutes);
 
-// 서버 실행
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+// 기본 페이지
+app.get("/", (req, res) => {
+  res.render("index", {
+    naverLoginURL: `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${process.env.NAVER_CLIENT_ID}&redirect_uri=${process.env.NAVER_REDIRECT_URI}&state=RANDOM_STATE`,
+    kakaoLoginURL: `https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=${process.env.KAKAO_CLIENT_ID}&redirect_uri=${process.env.KAKAO_REDIRECT_URI}`,
+  });
 });
+
+app.get("/register", (req, res) => res.render("register"));
+
+// DB 연결 및 서버 실행
+const PORT = process.env.PORT || 3000;
+db.authenticate()
+  .then(() => {
+    console.log("DB 연결 성공");
+    app.listen(PORT, () => {
+      console.log(`http://127.0.0.1:${PORT} 서버 실행 중`);
+    });
+  })
+  .catch((err) => {
+    console.error("DB 연결 실패:", err);
+  });

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>메인 페이지</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 100px; }
+        .container { width: 300px; margin: auto; padding: 20px; }
+        .logout-btn {
+            background-color: red;
+            color: white;
+            font-size: 16px;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .logout-btn:hover {
+            background-color: darkred;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>환영합니다! 🎉</h2>
+        <p>로그인에 성공하셨습니다.</p>
+        <button class="logout-btn" onclick="logout()">로그아웃</button>
+    </div>
+
+    <script>
+        function logout() {
+            fetch('/auth/logout', { method: 'POST' })
+                .then(() => {
+                    document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                    window.location.href = '/';
+                })
+                .catch(error => console.error('로그아웃 오류:', error));
+        }
+    </script>
+</body>
+</html>

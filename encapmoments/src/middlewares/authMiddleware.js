@@ -1,21 +1,30 @@
-const jwt = require('jsonwebtoken');
-const SECRET = 'your-secret-key'; // 실제 배포 시엔 dotenv로 관리!
+// jsonwebtoken 모듈을 사용하여 JWT 토큰 검증
+const jwt = require("jsonwebtoken");
 
-const authMiddleware = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: '토큰이 없습니다.' });
+// .env 파일의 환경변수 로드
+require("dotenv").config();
+
+// 인증 미들웨어 함수 export
+module.exports = (req, res, next) => {
+  // 쿠키에서 토큰 가져오기
+  const token = req.cookies.token; // 클라이언트가 보낸 쿠키 중 'token' 항목
+
+  // 토큰이 없는 경우 (로그인 안 한 상태)
+  if (!token) {
+    return res.status(401).json({ message: "인증 토큰이 필요합니다." });
   }
-
-  const token = authHeader.split(' ')[1];
 
   try {
-    const decoded = jwt.verify(token, SECRET);
-    req.user = decoded; // user.id로 접근 가능
+    // JWT 토큰 검증
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // 검증된 사용자 정보(req.user)에 저장 (다음 미들웨어나 라우터에서 사용 가능)
+    req.user = decoded;
+
+    // 다음 미들웨어로 진행
     next();
-  } catch (err) {
-    return res.status(403).json({ message: '유효하지 않은 토큰입니다.' });
+  } catch (error) {
+    // 토큰이 유효하지 않거나 만료된 경우
+    return res.status(403).json({ message: "유효하지 않은 토큰입니다." });
   }
 };
-
-module.exports = authMiddleware;
