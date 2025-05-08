@@ -6,4 +6,11 @@ router.get("/", (req, res) => {
   res.render("main"); // views/main.ejs
 });
 
+router.get("/mypage", (req, res) => {
+  res.render("mypage", {
+    nickname: req.user.nickname,
+    point: req.user.point,
+  });
+});
+
 module.exports = router;

@@ -7,8 +7,11 @@ const db = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const socialRoutes = require("./routes/socialRoutes");
 const mainRoutes = require("./routes/mainRoutes");
+const mypageRoutes = require("./routes/mypageRoutes");
+const profileRoutes = require("./routes/profileRoutes");
 const verifyToken = require("./middlewares/authMiddleware");
-
+const { renderMypage } = require("./controllers/mypageController");
+const familyRoutes = require("./routes/familyRoutes");
 dotenv.config();
 
 const app = express();
@@ -26,6 +29,12 @@ app.use("/auth", authRoutes);
 app.use("/naver", socialRoutes);
 app.use("/kakao", socialRoutes);
 app.use("/main", verifyToken, mainRoutes);
+app.use("/family", familyRoutes);
+app.use("/mypage", verifyToken, mypageRoutes);
+app.use("/profile", profileRoutes);
+app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
+app.use("/icons", express.static(path.join(__dirname, "public/icons")));
+app.use("/missions", express.static(path.join(__dirname, "public/missions")));
 
 // 기본 페이지
 app.get("/", (req, res) => {

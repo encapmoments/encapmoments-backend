@@ -7,17 +7,32 @@
     <style>
         body { font-family: Arial, sans-serif; text-align: center; margin-top: 100px; }
         .container { width: 300px; margin: auto; padding: 20px; }
-        .logout-btn {
-            background-color: red;
-            color: white;
+
+        .btn {
             font-size: 16px;
             padding: 10px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            margin: 10px 5px;
         }
+
+        .logout-btn {
+            background-color: red;
+            color: white;
+        }
+
         .logout-btn:hover {
             background-color: darkred;
+        }
+
+        .mypage-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .mypage-btn:hover {
+            background-color: #388e3c;
         }
     </style>
 </head>
@@ -25,7 +40,9 @@
     <div class="container">
         <h2>환영합니다! 🎉</h2>
         <p>로그인에 성공하셨습니다.</p>
-        <button class="logout-btn" onclick="logout()">로그아웃</button>
+
+        <a href="/mypage"><button class="btn mypage-btn">마이페이지</button></a>
+        <button class="btn logout-btn" onclick="logout()">로그아웃</button>
     </div>
 
     <script>

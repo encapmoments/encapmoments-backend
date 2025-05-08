@@ -1,0 +1,20 @@
+<h1>내가 수행한 미션</h1>
+
+<h2>📅 일간 미션</h2>
+<ul>
+  <% daily.forEach(mission => { %>
+    <li>
+      <strong><%= mission.mission_title %></strong> - <%= mission.reward %>P
+    </li>
+  <% }) %>
+</ul>
+
+<h2>📆 주간 미션</h2>
+<ul>
+  <% weekly.forEach(mission => { %>
+    <li>
+      <img src="<%= mission.mission_image %>" alt="미션 이미지" width="100" />
+      <strong><%= mission.mission_title %></strong> - <%= mission.reward %>P
+    </li>
+  <% }) %>
+</ul>

@@ -80,3 +80,22 @@ exports.logout = async (req, res) => {
     res.redirect("/");
   }
 };
+
+// Access Token 재발급 처리
+exports.refreshToken = async (req, res) => {
+  try {
+    const token = req.cookies.refreshToken;
+    if (!token) return res.status(401).json({ message: "Refresh token이 없습니다." });
+
+    const decoded = jwt.verify(token, process.env.REFRESH_SECRET);
+    const accessToken = jwt.sign({ id: decoded.id }, process.env.JWT_SECRET, { expiresIn: "1h" });
+
+    res.json({ accessToken });
+  } catch (error) {
+    console.error("토큰 재발급 오류:", error);
+    res.status(403).json({ message: "유효하지 않은 refresh token" });
+  }
+};
+
+module.exports = exports;
+
