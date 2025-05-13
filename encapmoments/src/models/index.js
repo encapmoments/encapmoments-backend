@@ -1,4 +1,5 @@
 // models/index.js
+const sequelize = require("../config/db");
 const User = require("./User");
 const Profile = require("./Profile");
 const FamilyMember = require("./FamilyMember");
@@ -18,4 +19,4 @@ User.hasMany(DailyMission, { foreignKey: "id" });
 WeeklyMission.belongsTo(User, { foreignKey: "id" });
 User.hasMany(WeeklyMission, { foreignKey: "id" });
 
-module.exports = { User, Profile, FamilyMember, DailyMission, WeeklyMission };
+module.exports = { sequelize, User, Profile, FamilyMember, DailyMission, WeeklyMission };

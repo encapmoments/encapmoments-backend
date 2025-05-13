@@ -52,7 +52,7 @@ const getUserInfo = async (userId) => {
     email: user.email,
     nickname: user.profile?.nickname || "",
     profile_image: user.profile?.profile_image || "/default-profile.png",
-    point: user.point || 0
+    points: user.profile?.points 
   };
 };
 

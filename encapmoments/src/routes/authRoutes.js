@@ -11,9 +11,6 @@ const verifyToken = require("../middlewares/authMiddleware");
 // 로그인 요청 처리 (일반 로그인)
 router.post("/login", authController.login);
 
-// 회원가입 요청 처리
-router.post("/register", authController.register);
-
 // 로그아웃 요청 처리 (로그인 상태 확인 필요)
 router.post("/logout", verifyToken, authController.logout); // ← access token 검증 후 로그아웃 실행
 

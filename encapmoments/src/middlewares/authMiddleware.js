@@ -18,8 +18,9 @@ module.exports = (req, res, next) => {
     // JWT 토큰 검증
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // 검증된 사용자 정보(req.user)에 저장 (다음 미들웨어나 라우터에서 사용 가능)
-    req.user = decoded;
+    // 검증된 사용자 정보(req.user)에 저장 (다음 미들웨어나 라우터에서 사용 가능), decoded에서 table의 id에 해당하는 값을 뽑음
+    req.user = { id: decoded.id }; 
+ 
 
     // 다음 미들웨어로 진행
     next();

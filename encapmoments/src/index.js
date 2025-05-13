@@ -2,9 +2,11 @@ const express = require("express");
 const path = require("path");
 const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
+const session = require("express-session");
 const db = require("./config/db");
 
 const authRoutes = require("./routes/authRoutes");
+const registerRoutes = require("./routes/registerRoutes");
 const socialRoutes = require("./routes/socialRoutes");
 const mainRoutes = require("./routes/mainRoutes");
 const mypageRoutes = require("./routes/mypageRoutes");
@@ -15,6 +17,12 @@ const familyRoutes = require("./routes/familyRoutes");
 dotenv.config();
 
 const app = express();
+
+app.use(session({
+  secret: process.env.SESSION_SECRET || "secret-key",
+  resave: false,
+  saveUninitialized: true,
+}));
 
 // 미들웨어 설정
 app.use(cookieParser());
@@ -31,10 +39,11 @@ app.use("/kakao", socialRoutes);
 app.use("/main", verifyToken, mainRoutes);
 app.use("/family", familyRoutes);
 app.use("/mypage", verifyToken, mypageRoutes);
-app.use("/profile", profileRoutes);
+app.use("/profile", verifyToken, profileRoutes);
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 app.use("/icons", express.static(path.join(__dirname, "public/icons")));
 app.use("/missions", express.static(path.join(__dirname, "public/missions")));
+app.use("/register", registerRoutes);
 
 // 기본 페이지
 app.get("/", (req, res) => {
@@ -44,7 +53,7 @@ app.get("/", (req, res) => {
   });
 });
 
-app.get("/register", (req, res) => res.render("register"));
+app.get("/register", (req, res) => res.render("registerProfile"));
 
 // DB 연결 및 서버 실행
 const PORT = process.env.PORT || 3000;

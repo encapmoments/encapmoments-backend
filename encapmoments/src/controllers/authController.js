@@ -1,3 +1,5 @@
+const multer = require("multer");
+
 // bcryptjs: 비밀번호 해싱을 위한 라이브러리
 const bcrypt = require("bcryptjs");
 
@@ -7,6 +9,35 @@ const jwt = require("jsonwebtoken");
 // 사용자 관련 DB 조작을 담당하는 서비스
 const userService = require("../services/userService");
 
+// multer 설정
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, "public/uploads"),
+  filename: (req, file, cb) => {
+    const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, unique + path.extname(file.originalname));
+  },
+});
+const upload = multer({ storage });
+
+// 1단계 렌더링
+exports.renderImageStep = (req, res) => {
+  res.render("register-step1");
+};
+
+// 이미지 업로드 후 닉네임 입력 폼 렌더링
+exports.handleImageUpload = upload.single("profile_image"), (req, res) => {
+  const imagePath = `/uploads/${req.file.filename}`;
+  res.render("registerForm", { profile_image: imagePath });
+};
+
+// 2단계 회원가입 완료 처리
+exports.completeRegister = async (req, res) => {
+  const { email, password, nickname, profile_image } = req.body;
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const user = await userService.createUser(email, hashedPassword);
+  await userService.upsertProfile(user.id, { nickname, profile_image });
+  res.redirect("/");
+};
 
 // 회원가입 처리
 exports.register = async (req, res) => {
