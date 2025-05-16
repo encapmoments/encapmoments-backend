@@ -13,4 +13,8 @@ router.get("/mypage", (req, res) => {
   });
 });
 
+router.get("/album-comment-test", (req, res) => {
+  res.render("albumComment");
+});
+
 module.exports = router;

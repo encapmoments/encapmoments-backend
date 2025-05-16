@@ -43,30 +43,38 @@ router.post("/members", verifyToken, upload.single("member_image"), async (req, 
 });
 
 // 구성원 수정
-// 구성원 수정 (파일 업로드 포함)
 router.put("/members/:id", verifyToken, upload.single("member_image"), async (req, res) => {
-    try {
-      const { member_name } = req.body;
-      const member_image = req.file ? `/uploads/${req.file.filename}` : null;
-  
-      await userService.updateFamilyMember(req.params.id, { member_name, member_image });
-      res.json({ message: "구성원 정보 수정 완료" });
-    } catch (err) {
-      console.error("구성원 수정 오류:", err);
-      res.status(500).json({ message: "구성원 수정 중 오류 발생" });
-    }
-  });
-  
+  try {
+    const member_name = req.body.member_name;
+    const member_image = req.file ? `/uploads/${req.file.filename}` : null;
+
+    const memberId = req.params.id;
+    const userId = req.user.id;
+    await userService.updateFamilyMember(memberId, userId, { member_name, member_image });
+    res.json({ message: "구성원 정보 수정 완료" });
+  } catch (err) {
+    console.error("구성원 수정 오류:", err);
+    res.status(500).json({ message: "구성원 수정 중 오류 발생" });
+  }
+});
 
 // 구성원 삭제
 router.delete("/members/:id", verifyToken, async (req, res) => {
+  const memberId = req.params.id;
+  const userId = req.user?.id; // 🔍 여기서 undefined이면 문제 발생
+
+  if (!userId) {
+    return res.status(400).json({ error: "유저 정보 없음" });
+  }
+
   try {
-    await userService.deleteFamilyMember(req.params.id);
+    await userService.deleteFamilyMember(memberId, userId);
     res.json({ message: "구성원 삭제 완료" });
   } catch (err) {
     console.error("구성원 삭제 오류:", err);
-    res.status(500).json({ message: "구성원 삭제 중 오류 발생" });
+    res.status(500).json({ error: "삭제 실패" });
   }
 });
+
 
 module.exports = router;

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>앨범 댓글 테스트</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 50px auto; }
+    .comment-box { margin-bottom: 20px; }
+    .comment { padding: 10px; border: 1px solid #ccc; margin-bottom: 10px; }
+    .comment img { width: 40px; height: 40px; border-radius: 50%; vertical-align: middle; }
+    .comment strong { margin-left: 10px; }
+    form {
+      margin-top: 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    select, input[type="text"] {
+      width: 300px;
+      padding: 10px;
+      font-size: 16px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background-color: #f9f9f9;
+      transition: border-color 0.3s;
+    }
+    select:focus, input[type="text"]:focus {
+      border-color: #4CAF50;
+      outline: none;
+      background-color: #fff;
+    }
+    button {
+      font-size: 16px;
+      padding: 10px 20px;
+      border: none;
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
+      border-radius: 8px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+<body>
+  <h1>앨범 댓글 테스트</h1>
+
+  <div class="comment-box" id="commentBox">
+    <!-- 댓글 목록 -->
+  </div>
+
+  <form id="commentForm">
+    <select name="memberName" id="memberName" required>
+      <option value="" disabled selected>구성원을 선택하세요</option>
+    </select>
+    <input type="text" name="comment_text" placeholder="댓글 내용" required />
+    <button type="submit">댓글 작성</button>
+  </form>
+
+  <script>
+    const albumId = 1;
+
+    // 구성원 목록 불러오기
+    async function loadMembers() {
+      try {
+        const res = await fetch("/album-comment/members", { credentials: "include" });
+        const members = await res.json();
+        const select = document.getElementById("memberName");
+
+        select.innerHTML = `<option value="" disabled selected>구성원을 선택하세요</option>`;
+        members.forEach(m => {
+          const option = document.createElement("option");
+          option.value = m.member_name;
+          option.textContent = m.member_name;
+          select.appendChild(option);
+        });
+
+        if (members.length === 0) {
+          alert("등록된 구성원이 없습니다.");
+        }
+      } catch (err) {
+        console.error("멤버 목록 불러오기 실패:", err);
+        alert("구성원 목록을 불러오는 중 오류가 발생했습니다.");
+      }
+    }
+
+    // 댓글 목록 불러오기
+    async function loadComments() {
+      try {
+        const res = await fetch(`/album-comment/${albumId}`, { credentials: "include" });
+        if (!res.ok) throw new Error("불러오기 실패");
+
+        const data = await res.json();
+        const container = document.getElementById("commentBox");
+        container.innerHTML = "";
+        data.forEach(c => {
+          const div = document.createElement("div");
+          div.className = "comment";
+          div.innerHTML = `
+            <img src="${c.album_member?.member_image || '/default-profile.png'}" />
+            <strong>${c.album_member?.member_name}</strong>: ${c.comment_text}
+          `;
+          container.appendChild(div);
+        });
+      } catch (err) {
+        console.error("댓글 불러오기 오류:", err);
+        alert("댓글을 불러오는 중 오류가 발생했습니다.");
+      }
+    }
+
+    // 댓글 작성
+    document.getElementById("commentForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = e.target;
+
+      try {
+        const res = await fetch(`/album-comment/${albumId}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            memberName: form.memberName.value,
+            comment_text: form.comment_text.value,
+          }),
+        });
+
+        if (!res.ok) throw new Error("댓글 작성 실패");
+        form.reset();
+        document.getElementById("memberName").selectedIndex = 0;
+        loadComments();
+      } catch (err) {
+        console.error("댓글 작성 오류:", err);
+        alert("댓글 작성 중 오류가 발생했습니다.");
+      }
+    });
+
+    // 초기 실행
+    window.onload = () => {
+      loadMembers();
+      loadComments();
+    };
+  </script>
+</body>
+</html>

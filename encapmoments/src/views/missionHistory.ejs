@@ -4,7 +4,10 @@
 <ul>
   <% daily.forEach(mission => { %>
     <li>
-      <strong><%= mission.mission_title %></strong> - <%= mission.reward %>P
+      <% if (mission.daily_image) { %>
+        <img src="<%= mission.daily_image %>" alt="일간 미션 이미지" width="100" />
+      <% } %>
+      <strong><%= mission.daily_title %></strong> - <%= mission.reward %>P
     </li>
   <% }) %>
 </ul>
@@ -13,8 +16,11 @@
 <ul>
   <% weekly.forEach(mission => { %>
     <li>
-      <img src="<%= mission.mission_image %>" alt="미션 이미지" width="100" />
-      <strong><%= mission.mission_title %></strong> - <%= mission.reward %>P
+      <% if (mission.weekly_image) { %>
+        <img src="<%= mission.weekly_image %>" alt="주간 미션 이미지" width="100" />
+      <% } %>
+      <strong><%= mission.weekly_title %></strong> - <%= mission.reward %>P
     </li>
   <% }) %>
 </ul>
+  

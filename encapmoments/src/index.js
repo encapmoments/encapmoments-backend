@@ -3,7 +3,8 @@ const path = require("path");
 const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
 const session = require("express-session");
-const db = require("./config/db");
+
+dotenv.config(); // 환경변수 설정
 
 const authRoutes = require("./routes/authRoutes");
 const registerRoutes = require("./routes/registerRoutes");
@@ -11,39 +12,43 @@ const socialRoutes = require("./routes/socialRoutes");
 const mainRoutes = require("./routes/mainRoutes");
 const mypageRoutes = require("./routes/mypageRoutes");
 const profileRoutes = require("./routes/profileRoutes");
-const verifyToken = require("./middlewares/authMiddleware");
-const { renderMypage } = require("./controllers/mypageController");
 const familyRoutes = require("./routes/familyRoutes");
-dotenv.config();
-
+const albumRoutes = require("./routes/albumRoutes");
+const albumCommentRoutes = require("./routes/albumCommentRoutes");
+const verifyToken = require("./middlewares/authMiddleware");
 const app = express();
 
+// 세션 설정
 app.use(session({
   secret: process.env.SESSION_SECRET || "secret-key",
   resave: false,
   saveUninitialized: true,
 }));
 
-// 미들웨어 설정
+// 공통 미들웨어
 app.use(cookieParser());
 app.use("/static", express.static(path.join(__dirname, "public")));
-app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views"));
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
-
-// 라우터 등록
-app.use("/auth", authRoutes);
-app.use("/naver", socialRoutes);
-app.use("/kakao", socialRoutes);
-app.use("/main", verifyToken, mainRoutes);
-app.use("/family", familyRoutes);
-app.use("/mypage", verifyToken, mypageRoutes);
-app.use("/profile", verifyToken, profileRoutes);
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 app.use("/icons", express.static(path.join(__dirname, "public/icons")));
 app.use("/missions", express.static(path.join(__dirname, "public/missions")));
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+
+// 뷰 엔진 설정
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
+
+// 라우팅
+app.use("/auth", authRoutes);
 app.use("/register", registerRoutes);
+app.use("/naver", socialRoutes);
+app.use("/kakao", socialRoutes);
+app.use("/main", verifyToken, mainRoutes);
+app.use("/mypage", verifyToken, mypageRoutes);
+app.use("/profile", verifyToken, profileRoutes);
+app.use("/family", verifyToken, familyRoutes);
+app.use("/album", verifyToken, albumRoutes);
+app.use("/album-comment", albumCommentRoutes); 
 
 // 기본 페이지
 app.get("/", (req, res) => {
@@ -53,17 +58,11 @@ app.get("/", (req, res) => {
   });
 });
 
+// 회원가입 첫 화면
 app.get("/register", (req, res) => res.render("registerProfile"));
 
-// DB 연결 및 서버 실행
+// 서버 실행
 const PORT = process.env.PORT || 3000;
-db.authenticate()
-  .then(() => {
-    console.log("DB 연결 성공");
-    app.listen(PORT, () => {
-      console.log(`http://127.0.0.1:${PORT} 서버 실행 중`);
-    });
-  })
-  .catch((err) => {
-    console.error("DB 연결 실패:", err);
-  });
+app.listen(PORT, () => {
+  console.log(`✅ 서버 실행 중: http://127.0.0.1:${PORT}`);
+});

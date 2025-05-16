@@ -86,10 +86,10 @@
       <% members.forEach(member => { %>
         <div>
           <img src="<%= member.member_image %>" alt="구성원 이미지" width="50" />
-          <input type="text" value="<%= member.member_name %>" data-id="<%= member.id %>" class="member-name" />
-          <input type="file" class="member-image-file" data-id="<%= member.id %>" accept="image/*" />
-          <button onclick="updateMember(<%= member.id %>)">수정</button>
-          <button onclick="deleteMember(<%= member.id %>)">삭제</button>
+          <input type="text" value="<%= member.member_name %>" data-id="<%= member.member_id %>" class="member-name" />
+          <input type="file" class="member-image-file" data-id="<%= member.member_id %>" accept="image/*" />
+          <button onclick="updateMember('<%= member.member_id %>')">수정</button>
+          <button onclick="deleteMember('<%= member.member_id %>')">삭제</button>
         </div>
       <% }); %>
     <% } else { %>

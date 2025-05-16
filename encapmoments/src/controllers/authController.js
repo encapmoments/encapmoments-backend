@@ -1,4 +1,4 @@
-const multer = require("multer");
+const upload = require("../middlewares/upload"); // 변경 전: multer 직접 설정
 
 // bcryptjs: 비밀번호 해싱을 위한 라이브러리
 const bcrypt = require("bcryptjs");
@@ -9,26 +9,20 @@ const jwt = require("jsonwebtoken");
 // 사용자 관련 DB 조작을 담당하는 서비스
 const userService = require("../services/userService");
 
-// multer 설정
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "public/uploads"),
-  filename: (req, file, cb) => {
-    const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, unique + path.extname(file.originalname));
-  },
-});
-const upload = multer({ storage });
-
 // 1단계 렌더링
 exports.renderImageStep = (req, res) => {
   res.render("register-step1");
 };
 
 // 이미지 업로드 후 닉네임 입력 폼 렌더링
-exports.handleImageUpload = upload.single("profile_image"), (req, res) => {
-  const imagePath = `/uploads/${req.file.filename}`;
-  res.render("registerForm", { profile_image: imagePath });
-};
+exports.handleImageUpload = [
+  upload.single("profile_image"),
+  (req, res) => {
+    const imagePath = `/uploads/${req.file.filename}`;
+    res.render("registerForm", { profile_image: imagePath });
+  },
+];
+
 
 // 2단계 회원가입 완료 처리
 exports.completeRegister = async (req, res) => {
@@ -53,7 +47,7 @@ exports.register = async (req, res) => {
     res.redirect("/");
   } catch (error) {
     console.error("회원가입 예외:", error);
-    res.status(500).send("회원가입 처리 중 오류 발생");
+    res.status(500).json({ message: "회원가입 처리 중 오류 발생" });
   }
 };
 
@@ -65,11 +59,11 @@ exports.login = async (req, res) => {
   try {
     // 이메일로 사용자 조회
     const user = await userService.findUserByEmail(email);
-    if (!user) return res.status(401).send("사용자를 찾을 수 없습니다.");
+    if (!user) return res.status(401).json({ message: "사용자를 찾을 수 없습니다." });
 
     // 비밀번호 비교 (입력한 비밀번호와 DB의 해시된 비밀번호)
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(401).send("비밀번호가 일치하지 않습니다.");
+    if (!isMatch) return res.status(401).json({ message: "비밀번호가 일치하지 않습니다." });
 
     // JWT access token 발급 (유효시간 1시간)
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: "1h" });
@@ -88,7 +82,7 @@ exports.login = async (req, res) => {
     res.redirect("/main");
   } catch (error) {
     console.error("로그인 예외:", error);
-    res.status(500).send("로그인 처리 중 오류 발생");
+    res.status(500).json({ message: "로그인 처리 중 오류 발생" });
   }
 };
 
