@@ -57,15 +57,28 @@ exports.patchComment = async (req, res) => {
   try {
     const albumId = parseInt(req.params.albumId);
     const commentId = parseInt(req.params.commentId);
-    const userId = req.user.id;
+    const userId = req.user?.id;
     const { comment_text } = req.body;
+
+    console.log("🛠 댓글 수정 요청", {
+      albumId,
+      commentId,
+      userId,
+      comment_text,
+    });
+
+    if (!userId || !comment_text) {
+      return res.status(400).json({ error: "요청 값 누락" });
+    }
+
     const updated = await updateAlbumComment({ userId, albumId, commentId, comment_text });
     res.json(updated);
   } catch (error) {
-    console.error("댓글 수정 실패:", error.message);
+    console.error("❌ 댓글 수정 실패:", error);
     res.status(400).json({ error: error.message });
   }
 };
+
 
 // 댓글 삭제
 exports.deleteComment = async (req, res) => {

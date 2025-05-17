@@ -13,9 +13,10 @@ router.get("/:albumId", verifyToken, controller.fetchComments);
 router.post("/:albumId", verifyToken, controller.postComment);
 
 // 댓글 수정
-router.patch("/:albumId/:commentId", controller.patchComment);
+router.put("/:albumId/:commentId", verifyToken, controller.patchComment);
+router.patch("/:albumId/:commentId", verifyToken, controller.patchComment);
 
 // 댓글 삭제
-router.delete("/:albumId/:commentId", controller.deleteComment);
+router.delete("/:albumId/:commentId", verifyToken, controller.deleteComment);
 
 module.exports = router;

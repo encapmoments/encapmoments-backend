@@ -1,10 +1,11 @@
-//profileRoutes.js
+// 기존 profileRoutes.js에 추가할 GET /profile/me 라우터 구현
 const express = require("express");
 const router = express.Router();
 const profileController = require("../controllers/profileController");
 const multer = require("multer");
 const path = require("path");
 const verifyToken = require("../middlewares/authMiddleware");
+const userService = require("../services/userService");
 
 // storage 설정
 const storage = multer.diskStorage({
@@ -18,6 +19,17 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage: storage });
+
+// profile/me: 현재 로그인한 사용자 정보 JSON 응답
+router.get("/me", verifyToken, async (req, res) => {
+  try {
+    const data = await userService.getUserInfo(req.user.id);
+    res.json(data);
+  } catch (err) {
+    console.error("프로필 조회 오류:", err);
+    res.status(500).json({ message: "프로필 정보를 불러오는 중 오류 발생" });
+  }
+});
 
 // 프로필 이미지 업로드 엔드포인트
 router.post("/upload", verifyToken, upload.single("profile_image"), (req, res) => {

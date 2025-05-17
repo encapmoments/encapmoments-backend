@@ -38,6 +38,7 @@
       color: white;
       cursor: pointer;
       border-radius: 8px;
+      margin-right: 5px;
     }
     button:hover {
       background-color: #45a049;
@@ -95,12 +96,16 @@
         const data = await res.json();
         const container = document.getElementById("commentBox");
         container.innerHTML = "";
+
         data.forEach(c => {
           const div = document.createElement("div");
           div.className = "comment";
           div.innerHTML = `
             <img src="${c.album_member?.member_image || '/default-profile.png'}" />
-            <strong>${c.album_member?.member_name}</strong>: ${c.comment_text}
+            <strong>${c.album_member?.member_name}</strong>: 
+            <span class="comment-text">${c.comment_text}</span><br/>
+            <button onclick="editComment(${c.comment_id}, '${c.comment_text.replace(/'/g, "\\'")}')">수정</button>
+            <button onclick="deleteComment(${c.comment_id})">삭제</button>
           `;
           container.appendChild(div);
         });
@@ -135,6 +140,45 @@
         alert("댓글 작성 중 오류가 발생했습니다.");
       }
     });
+
+    // 댓글 수정
+    function editComment(commentId, oldText) {
+      const newText = prompt("댓글 수정:", oldText);
+      if (!newText || newText === oldText) return;
+
+      fetch(`/album-comment/${albumId}/${commentId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ comment_text: newText })
+      })
+      .then(res => {
+        if (!res.ok) throw new Error("수정 실패");
+        loadComments();
+      })
+      .catch(err => {
+        console.error("댓글 수정 오류:", err);
+        alert("댓글 수정 중 오류 발생");
+      });
+    }
+
+    // 댓글 삭제
+    function deleteComment(commentId) {
+      if (!confirm("정말 이 댓글을 삭제하시겠습니까?")) return;
+
+      fetch(`/album-comment/${albumId}/${commentId}`, {
+        method: "DELETE",
+        credentials: "include"
+      })
+      .then(res => {
+        if (!res.ok) throw new Error("삭제 실패");
+        loadComments();
+      })
+      .catch(err => {
+        console.error("댓글 삭제 오류:", err);
+        alert("댓글 삭제 중 오류 발생");
+      });
+    }
 
     // 초기 실행
     window.onload = () => {

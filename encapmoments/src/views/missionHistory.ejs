@@ -2,25 +2,32 @@
 
 <h2>📅 일간 미션</h2>
 <ul>
-  <% daily.forEach(mission => { %>
-    <li>
-      <% if (mission.daily_image) { %>
-        <img src="<%= mission.daily_image %>" alt="일간 미션 이미지" width="100" />
-      <% } %>
-      <strong><%= mission.daily_title %></strong> - <%= mission.reward %>P
-    </li>
-  <% }) %>
+  <% if (daily && daily.length > 0) { %>
+    <% daily.forEach(mission => { %>
+      <li>
+        <% if (mission.daily_image) { %>
+          <img src="<%= mission.daily_image %>" alt="일간 미션 이미지" width="100" />
+        <% } %>
+        <strong><%= mission.daily_title %></strong> - <%= mission.reward %>P
+      </li>
+    <% }) %>
+  <% } else { %>
+    <li>수행한 일간 미션이 없습니다.</li>
+  <% } %>
 </ul>
 
 <h2>📆 주간 미션</h2>
 <ul>
-  <% weekly.forEach(mission => { %>
-    <li>
-      <% if (mission.weekly_image) { %>
-        <img src="<%= mission.weekly_image %>" alt="주간 미션 이미지" width="100" />
-      <% } %>
-      <strong><%= mission.weekly_title %></strong> - <%= mission.reward %>P
-    </li>
-  <% }) %>
+  <% if (weekly && weekly.length > 0) { %>
+    <% weekly.forEach(mission => { %>
+      <li>
+        <% if (mission.weekly_image) { %>
+          <img src="<%= mission.weekly_image %>" alt="주간 미션 이미지" width="100" />
+        <% } %>
+        <strong><%= mission.weekly_title %></strong> - <%= mission.reward %>P
+      </li>
+    <% }) %>
+  <% } else { %>
+    <li>수행한 주간 미션이 없습니다.</li>
+  <% } %>
 </ul>
-  

@@ -40,6 +40,7 @@ app.set("views", path.join(__dirname, "views"));
 
 // 라우팅
 app.use("/auth", authRoutes);
+app.use("/auth", socialRoutes);
 app.use("/register", registerRoutes);
 app.use("/naver", socialRoutes);
 app.use("/kakao", socialRoutes);

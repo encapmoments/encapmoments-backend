@@ -94,3 +94,17 @@ exports.kakaoLogin = async (req, res) => {
     res.status(500).send("카카오 로그인 중 오류 발생");
   }
 };
+
+exports.registerSocialUser = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { nickname } = req.body;
+
+    await userService.upsertProfile(userId, { nickname });
+
+    res.json({ message: "소셜 회원가입 완료" });
+  } catch (error) {
+    console.error("소셜 회원가입 오류:", error);
+    res.status(500).json({ message: "회원가입 실패" });
+  }
+};

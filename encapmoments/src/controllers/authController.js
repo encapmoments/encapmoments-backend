@@ -1,20 +1,9 @@
-const upload = require("../middlewares/upload"); // 변경 전: multer 직접 설정
-
-// bcryptjs: 비밀번호 해싱을 위한 라이브러리
+const upload = require("../middlewares/upload");
 const bcrypt = require("bcryptjs");
-
-// jsonwebtoken: JWT 토큰 발급 및 검증을 위한 라이브러리
 const jwt = require("jsonwebtoken");
-
-// 사용자 관련 DB 조작을 담당하는 서비스
 const userService = require("../services/userService");
 
-// 1단계 렌더링
-exports.renderImageStep = (req, res) => {
-  res.render("register-step1");
-};
-
-// 이미지 업로드 후 닉네임 입력 폼 렌더링
+// 프로필 이미지 업로드 후 닉네임 입력 폼 렌더링 (사용 안 함, 참고용)
 exports.handleImageUpload = [
   upload.single("profile_image"),
   (req, res) => {
@@ -23,90 +12,68 @@ exports.handleImageUpload = [
   },
 ];
 
-
-// 2단계 회원가입 완료 처리
+// 일반 회원가입 (RESTful 방식) - 완성본
 exports.completeRegister = async (req, res) => {
-  const { email, password, nickname, profile_image } = req.body;
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const user = await userService.createUser(email, hashedPassword);
-  await userService.upsertProfile(user.id, { nickname, profile_image });
-  res.redirect("/");
-};
-
-// 회원가입 처리
-exports.register = async (req, res) => {
-  const { email, password } = req.body; // 클라이언트에서 전달된 이메일, 비밀번호
   try {
-    // 비밀번호 해싱 (10은 salt rounds)
+    const { email, password, nickname, profile_image } = req.body;
+
+    if (!email || !password || !nickname || !profile_image) {
+      return res.status(400).json({ message: "모든 필드를 입력해야 합니다." });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await userService.createUser(email, hashedPassword);
+    await userService.upsertProfile(user.id, { nickname, profile_image });
 
-    // 해싱된 비밀번호와 함께 사용자 생성
-    await userService.createUser(email, hashedPassword);
-
-    // 회원가입 완료 후 로그인 페이지로 리디렉션
-    res.redirect("/");
+    res.json({ message: "회원가입 성공" });
   } catch (error) {
-    console.error("회원가입 예외:", error);
+    console.error("회원가입 오류:", error);
     res.status(500).json({ message: "회원가입 처리 중 오류 발생" });
   }
 };
 
-
-// 일반 로그인 처리
+// 일반 로그인
 exports.login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    // 이메일로 사용자 조회
     const user = await userService.findUserByEmail(email);
     if (!user) return res.status(401).json({ message: "사용자를 찾을 수 없습니다." });
 
-    // 비밀번호 비교 (입력한 비밀번호와 DB의 해시된 비밀번호)
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ message: "비밀번호가 일치하지 않습니다." });
 
-    // JWT access token 발급 (유효시간 1시간)
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: "1h" });
-
-    // JWT refresh token 발급 (유효시간 7일)
     const refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_SECRET, { expiresIn: "7d" });
 
-    // DB에 refresh token 저장
     await userService.saveRefreshToken(user.id, refreshToken);
 
-    // 쿠키로 access, refresh 토큰 저장 (httpOnly로 JS에서 접근 불가하게 함)
     res.cookie("token", token, { httpOnly: true });
     res.cookie("refreshToken", refreshToken, { httpOnly: true });
 
-    // 메인 페이지로 이동
     res.redirect("/main");
   } catch (error) {
-    console.error("로그인 예외:", error);
+    console.error("로그인 오류:", error);
     res.status(500).json({ message: "로그인 처리 중 오류 발생" });
   }
 };
 
-
-// 로그아웃 처리
+// 로그아웃
 exports.logout = async (req, res) => {
   try {
-    // 토큰에서 인증된 사용자 정보(req.user)로 DB에서 refresh token 제거
     if (req.user && req.user.id) {
       await userService.clearRefreshToken(req.user.id);
     }
   } catch (error) {
     console.error("로그아웃 예외:", error);
   } finally {
-    // 클라이언트의 쿠키 제거
     res.clearCookie("token");
     res.clearCookie("refreshToken");
-
-    // 홈 페이지로 이동
     res.redirect("/");
   }
 };
 
-// Access Token 재발급 처리
+// Access Token 재발급
 exports.refreshToken = async (req, res) => {
   try {
     const token = req.cookies.refreshToken;
@@ -123,4 +90,3 @@ exports.refreshToken = async (req, res) => {
 };
 
 module.exports = exports;
-
