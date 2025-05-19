@@ -7,7 +7,9 @@ require("dotenv").config();
 // 인증 미들웨어 함수 export
 module.exports = (req, res, next) => {
   // 쿠키에서 토큰 가져오기
-  const token = req.cookies.token; // 클라이언트가 보낸 쿠키 중 'token' 항목
+  // const token = req.cookies.token; // 클라이언트가 보낸 쿠키 중 'token' 항목
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
 
   // 토큰이 없는 경우 (로그인 안 한 상태)
   if (!token) {

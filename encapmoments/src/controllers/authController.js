@@ -8,7 +8,7 @@ exports.handleImageUpload = [
   upload.single("profile_image"),
   (req, res) => {
     const imagePath = `/uploads/${req.file.filename}`;
-    res.render("registerForm", { profile_image: imagePath });
+    // res.render("registerForm", { profile_image: imagePath });
   },
 ];
 
@@ -25,7 +25,7 @@ exports.completeRegister = async (req, res) => {
     const user = await userService.createUser(email, hashedPassword);
     await userService.upsertProfile(user.id, { nickname, profile_image });
 
-    res.json({ message: "회원가입 성공" });
+    res.json({ success: true, message: "회원가입 성공" });
   } catch (error) {
     console.error("회원가입 오류:", error);
     res.status(500).json({ message: "회원가입 처리 중 오류 발생" });
@@ -37,6 +37,7 @@ exports.login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
+
     const user = await userService.findUserByEmail(email);
     if (!user) return res.status(401).json({ message: "사용자를 찾을 수 없습니다." });
 
@@ -48,10 +49,23 @@ exports.login = async (req, res) => {
 
     await userService.saveRefreshToken(user.id, refreshToken);
 
-    res.cookie("token", token, { httpOnly: true });
-    res.cookie("refreshToken", refreshToken, { httpOnly: true });
+    // 이건 Web 용. mobile은 브라우저가 아니므로 쿠기 기반 유지 불가 => 쿠키 값을 json으로 mobile에 전달
+    // res.cookie("token", token, { httpOnly: true });
+    // res.cookie("refreshToken", refreshToken, { httpOnly: true });
+    // res.redirect('/main');
 
-    res.redirect("/main");
+    res.json({
+      success: true,
+      message: "로그인 성공",
+      user: {
+        email: user.email,
+        nickname: user.profile?.nickname,
+        profile_image: user.profile?.profile_image,
+      },
+      accessToken: token,
+      refreshToken: refreshToken,
+    });
+
   } catch (error) {
     console.error("로그인 오류:", error);
     res.status(500).json({ message: "로그인 처리 중 오류 발생" });
@@ -64,19 +78,23 @@ exports.logout = async (req, res) => {
     if (req.user && req.user.id) {
       await userService.clearRefreshToken(req.user.id);
     }
+    res.json({success: true});
+
   } catch (error) {
     console.error("로그아웃 예외:", error);
   } finally {
-    res.clearCookie("token");
-    res.clearCookie("refreshToken");
-    res.redirect("/");
+    // res.clearCookie("token");
+    // res.clearCookie("refreshToken");
+    // res.redirect("/");
+
   }
 };
 
 // Access Token 재발급
 exports.refreshToken = async (req, res) => {
   try {
-    const token = req.cookies.refreshToken;
+    // const token = req.cookies.refreshToken;
+    const token = req.body.refreshToken || req.headers['x-refresh-token']; // cookie 안 쓰고 body json에서 꺼내 씀, 뒤는 header에 넣는 거(보안용)
     if (!token) return res.status(401).json({ message: "Refresh token이 없습니다." });
 
     const decoded = jwt.verify(token, process.env.REFRESH_SECRET);
