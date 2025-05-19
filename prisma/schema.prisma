@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "./node_modules/@prisma/client"  // ← 명시적 설정
+  output   = "./node_modules/@prisma/client"
 }
 
 datasource db {
@@ -11,12 +11,12 @@ datasource db {
 model album {
   id          Int
   album_id    Int       @default(autoincrement())
-  album_title String?   @db.VarChar(40)
+  album_title String    @db.VarChar(40)
   album_tag   String?   @db.VarChar(20)
   album_image String?   @db.VarChar(255)
   location    String?   @db.VarChar(50)
-  created_at  DateTime? @default(now()) @db.Timestamp(0)
-  uploaded_at DateTime? @default(now()) @db.Timestamp(0)
+  created_at  DateTime? @default(now()) @db.DateTime(0)
+  uploaded_at DateTime? @default(now()) @db.DateTime(0)
 
   @@id([album_id, id])
   @@index([id], map: "id")
@@ -96,13 +96,14 @@ model user {
   naver_access_code   String?   @db.VarChar(100)
   naver_refresh_code  String?   @db.VarChar(100)
   created_at          DateTime? @default(now()) @db.Timestamp(0)
+  jwt_refresh_token   String?   @db.Text
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model weekly_mission {
   id                 Int
   weekly_id          Int       @default(autoincrement())
-  weekly_image       String?   @db.VarChar(255)
+  weekly_image       String?   @db.Text
   weekly_title       String?   @db.VarChar(40)
   weekly_description String?   @db.VarChar(1000)
   reward             Int?      @default(100)
