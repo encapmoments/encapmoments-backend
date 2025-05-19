@@ -11,12 +11,12 @@ const verifyToken = require("../middlewares/authMiddleware");
 router.post("/login", authController.login);
 
 // 로그아웃 요청 처리 (로그인 상태 확인 필요)
-router.post("/logout", verifyToken, authController.logout); // ← access token 검증 후 로그아웃 실행
+router.post("/logout", verifyToken, authController.logout);
 
-// Access Token 재발급 요청 처리 (로그인 상태 확인 필요)
+// Access Token 재발급 요청 처리
 router.post("/refreshToken", authController.refreshToken);
 
-// 프로필 이미지 업로드
+// 프로필 이미지 업로드 (회원가입 1단계 전용)
 router.post("/uploadImage", upload.single("profile_image"), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: "이미지 파일이 없습니다." });
@@ -28,5 +28,4 @@ router.post("/uploadImage", upload.single("profile_image"), (req, res) => {
 // 일반 회원가입 처리 (2단계 - 모든 정보 한 번에 받기)
 router.post("/register", authController.completeRegister);
 
-// 라우터 객체 내보내기
 module.exports = router;

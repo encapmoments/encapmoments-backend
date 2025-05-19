@@ -1,4 +1,3 @@
-// 기존 profileRoutes.js에 추가할 GET /profile/me 라우터 구현
 const express = require("express");
 const router = express.Router();
 const profileController = require("../controllers/profileController");
