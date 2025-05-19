@@ -1,6 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
+
 // 전체 조회
 exports.getDailyMissions = async (req, res) => {
     const userId = req.user.id;
@@ -80,9 +81,9 @@ exports.getDailyMissionDetail = async (req, res) => {
   try {
     const mission = await prisma.daily_mission.findUnique({
       where: {
-        id_daily_id: {
-          id: userId,
-          daily_id: dailyId
+        daily_id_id: {
+          daily_id: dailyId,
+          id: userId
         }
       },
       select: {

@@ -40,9 +40,9 @@ exports.getWeeklyMissionDetail = async (req, res) => {
   try {
     const mission = await prisma.weekly_mission.findUnique({
       where: {
-        id_weekly_id: {
-          id: userId,
-          weekly_id: weeklyId
+        weekly_id_id: {
+          weekly_id: weeklyId,
+          id: userId
         }
       },
       select: {
@@ -65,7 +65,6 @@ exports.getWeeklyMissionDetail = async (req, res) => {
   }
 };
 
-
 // 주간 미션 생성
 exports.generateWeeklyMissions = async (req, res) => {
   const userId = req.user.id;
@@ -77,9 +76,10 @@ exports.generateWeeklyMissions = async (req, res) => {
 
   try {
     // 1. GPT 프롬프트 생성
-    const prompt = `
-"${topic}"을(를) 주제로 한 주간 미션 3개를 JSON 형식으로 만들어줘.
-형식 예시:
+      const prompt = `
+"${topic}"을 주제로 한 주간 미션 3개를 순수한 JSON 형식으로 출력해줘.
+아무 말도 하지 말고 아래 형식으로만 응답해:
+
 [
   {
     "weekly_title": "미션 제목",
@@ -109,7 +109,7 @@ exports.generateWeeklyMissions = async (req, res) => {
         const dalleRes = await openai.images.generate({
           model: 'dall-e-3',
           prompt: `${mission.weekly_title} - ${mission.weekly_description}`,
-          size: '512x512',
+          size: '1024x1024',
           n: 1
         });
         return dalleRes.data[0].url;
