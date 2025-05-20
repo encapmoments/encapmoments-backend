@@ -27,6 +27,15 @@ exports.getDailyMissions = async (req, res) => {
   
       // 2. 만약 없다면 → 새로 5개 생성
       if (activeMissions.length === 0) {
+       // 만료된, 수행안한 미션 삭제
+        await prisma.daily_mission.deleteMany({
+        where: {
+          id: userId,
+          expires_at: { lt: now },
+          is_completed: false
+        }
+      });
+
         const allMissions = await prisma.daily_mission_pool.findMany();
 
         // 배열을 랜덤하게 섞고, 앞에서 5개만 자르기

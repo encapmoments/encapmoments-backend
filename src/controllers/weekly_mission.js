@@ -75,6 +75,19 @@ exports.generateWeeklyMissions = async (req, res) => {
   }
 
   try {
+    const now = new Date();
+
+    // 만료된 & 완료되지 않은 주간 미션 삭제
+    await prisma.weekly_mission.deleteMany({
+      where: {
+        id: userId,
+        expires_at: { lt: now },
+        is_completed: false
+      }
+    });
+
+
+
     // 1. GPT 프롬프트 생성
       const prompt = `
 "${topic}"을 주제로 한 주간 미션 3개를 순수한 JSON 형식으로 출력해줘.
@@ -117,7 +130,6 @@ exports.generateWeeklyMissions = async (req, res) => {
     );
 
     // 4. DB 저장
-    const now = new Date();
     const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
     const createdMissions = await Promise.all(
