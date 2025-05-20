@@ -154,7 +154,7 @@ const deleteFamilyMember = async (memberId, userId) => {
   });
 };
 
-const fetchUserMissions = async (userId) => {
+const getUserMissions = async (userId) => {
   const daily = await prisma.daily_mission.findMany({
     where: { id: userId, is_completed: true },
   });
@@ -232,7 +232,7 @@ module.exports = {
   clearRefreshToken,
   findUserById,
   getUserInfo,
-  fetchUserMissions,
+  getUserMissions,
   updateUserInfo,
   findUserWithProfile,
   upsertProfile,
