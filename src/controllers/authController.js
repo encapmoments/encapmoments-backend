@@ -78,7 +78,7 @@ exports.logout = async (req, res) => {
     if (req.user && req.user.id) {
       await userService.clearRefreshToken(req.user.id);
     }
-    res.json({success: true});
+    res.json({success: true}); // success 추가 (프론트용)
 
   } catch (error) {
     console.error("로그아웃 예외:", error);

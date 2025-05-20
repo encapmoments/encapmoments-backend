@@ -36,7 +36,7 @@ exports.createAlbum = async (req, res) => {
         uploaded_at: nowKST
       }
     });
-    res.status(201).json({message: '앨범 생성 성공'});
+    res.status(201).json({success: true, message: '앨범 생성 성공'}); // success 추가 (프론트용)
   } catch(err){
     console.error('앨범 생성 실패:', err);
     res.status(500).json({ message: '서버 오류' });
@@ -119,7 +119,7 @@ exports.deleteAlbum = async (req, res) =>{
         }
       }
     });
-    res.json({ message: '앨범 삭제 완료'});
+    res.json({ success: true, message: '앨범 삭제 완료'}); // 프론트용
   } catch(err) {
     console.error('앨범 삭제 실패:', err);
     res.status(500).json({ message: '서버 오류'});
@@ -151,7 +151,7 @@ exports.updateAlbum = async (req, res) => {
         uploaded_at: nowKST
       }
     });
-    res.json(updated);
+    res.json({success: true, ...updated}); //
   }catch (err) {    
     console.error('앨범 수정 실패:', err);
     res.status(500).json({ message: '서버 오류' });
