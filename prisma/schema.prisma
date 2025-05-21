@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "./node_modules/@prisma/client"
+  //output   = "./node_modules/@prisma/client" --> prisma 폴더안에 node_modules 설치되서 주석처리, 자동으로 node_modules 폴더 찾아 설치
 }
 
 datasource db {

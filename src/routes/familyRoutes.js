@@ -1,19 +1,13 @@
+
 const express = require("express");
 const router = express.Router();
-const path = require("path");
 const multer = require("multer");
 const verifyToken = require("../middlewares/authMiddleware");
 const userService = require("../services/userService");
+const { uploadImageToS3 } = require("../utils/s3");
 
-// storage 설정
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "public/uploads"),
-  filename: (req, file, cb) => {
-    const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, unique + path.extname(file.originalname));
-  }
-});
-const upload = multer({ storage });
+// S3 업로드를 위한 임시 저장소
+const upload = multer({ dest: "temp/" });
 
 // 구성원 목록 조회
 router.get("/members", verifyToken, async (req, res) => {
@@ -30,11 +24,13 @@ router.get("/members", verifyToken, async (req, res) => {
 router.post("/members", verifyToken, upload.single("member_image"), async (req, res) => {
   try {
     const { member_name } = req.body;
-    const member_image = req.file ? `/uploads/${req.file.filename}` : null;
-    if (!member_name || !member_image) {
+    const file = req.file;
+
+    if (!member_name || !file) {
       return res.status(400).json({ message: "이름과 이미지가 필요합니다." });
     }
-    await userService.addFamilyMember(req.user.id, { member_name, member_image });
+
+    await userService.addFamilyMember(req.user.id, { member_name }, file);
     res.json({ message: "구성원 등록 완료" });
   } catch (err) {
     console.error("구성원 등록 오류:", err);
@@ -45,12 +41,13 @@ router.post("/members", verifyToken, upload.single("member_image"), async (req, 
 // 구성원 수정
 router.put("/members/:id", verifyToken, upload.single("member_image"), async (req, res) => {
   try {
-    const member_name = req.body.member_name;
-    const member_image = req.file ? `/uploads/${req.file.filename}` : null;
+    const { member_name } = req.body;
+    const file = req.file;
 
     const memberId = req.params.id;
     const userId = req.user.id;
-    await userService.updateFamilyMember(memberId, userId, { member_name, member_image });
+
+    await userService.updateFamilyMember(memberId, userId, { member_name }, file);
     res.json({ message: "구성원 정보 수정 완료" });
   } catch (err) {
     console.error("구성원 수정 오류:", err);
@@ -61,7 +58,7 @@ router.put("/members/:id", verifyToken, upload.single("member_image"), async (re
 // 구성원 삭제
 router.delete("/members/:id", verifyToken, async (req, res) => {
   const memberId = req.params.id;
-  const userId = req.user?.id; // 🔍 여기서 undefined이면 문제 발생
+  const userId = req.user?.id;
 
   if (!userId) {
     return res.status(400).json({ error: "유저 정보 없음" });
@@ -75,6 +72,5 @@ router.delete("/members/:id", verifyToken, async (req, res) => {
     res.status(500).json({ error: "삭제 실패" });
   }
 });
-
 
 module.exports = router;

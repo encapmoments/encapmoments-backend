@@ -27,10 +27,6 @@ app.use(session({
 
 
 app.use(cookieParser());
-app.use("/static", express.static(path.join(__dirname, "public")));
-app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
-app.use("/icons", express.static(path.join(__dirname, "public/icons")));
-app.use("/missions", express.static(path.join(__dirname, "public/missions")));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
