@@ -6,7 +6,7 @@ const { completeMission } = require("../services/missionService");
 // 앨범 생성
 exports.createAlbum = async (req, res) => {
   const userId = req.user.id;
-   const { album_title, album_tag, album_image, location, mission_type, mission_id } = req.body;
+  const { album_title, album_tag, album_image, location, mission_type, mission_id } = req.body;
   
   if (!album_title) {
     return res.status(400).json({ message: '앨범 제목은 필수입니다.', album_id: album.album_id});
