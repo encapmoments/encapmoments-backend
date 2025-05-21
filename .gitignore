@@ -1,0 +1,7 @@
+node_modules/
+.env
+encapmoments.sql
+logs
+*.logs
+.vscode/
+package-lock.json*.zip
