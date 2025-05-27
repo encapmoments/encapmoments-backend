@@ -7,7 +7,8 @@ const { completeMission } = require("../services/missionService");
 exports.createAlbum = async (req, res) => {
   const userId = req.user.id;
   const { album_title, album_tag, album_image, location, mission_type, mission_id } = req.body;
-  
+
+  console.log({mission_type, mission_id});
   if (!album_title) {
     return res.status(400).json({ message: '앨범 제목은 필수입니다.', album_id: album.album_id});
   }

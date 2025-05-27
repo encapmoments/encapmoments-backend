@@ -3,8 +3,9 @@ const path = require("path");
 const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
 const session = require("express-session");
+const cors = require("cors");
 
-dotenv.config();
+require('dotenv').config();
 
 const authRoutes = require("./routes/authRoutes");
 const registerRoutes = require("./routes/registerRoutes");
@@ -27,10 +28,11 @@ app.use(session({
 
 
 app.use(cookieParser());
+app.use("/public", express.static(path.join(__dirname, "../public")));
 app.use("/static", express.static(path.join(__dirname, "public")));
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 app.use("/icons", express.static(path.join(__dirname, "public/icons")));
-app.use("/missions", express.static(path.join(__dirname, "public/missions")));
+app.use("/missions", express.static(path.join(__dirname, "public")));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
@@ -47,6 +49,27 @@ app.use("/album", verifyToken, albumRoutes);
 app.use("/album-comment", albumCommentRoutes);
 app.use('/daily_mission', verifyToken, dailyMissionRoutes);
 app.use('/weekly_mission', verifyToken, weeklyMissionRoutes);
+
+// CORS 설정
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || origin === 'null') {
+      callback(null, true);
+    } else {
+      const allowedOrigins = [
+	'http://3.38.233.150',
+        'http://3.38.233.150:3000',
+	'http://localhost:3000'
+      ];
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("NOT ALLOWED BY CORS"));
+      }
+    }
+  },
+  credentials: true
+}));
 
 // 기본 페이지 및 웹 렌더링 제거
 app.get("/", (req, res) => {

@@ -12,6 +12,21 @@ exports.handleImageUpload = [
   },
 ];
 
+exports.uploadImage = async (req, res) => {
+  const { profile_image } = req.body;
+
+  if (!profile_image) {
+    return res.status(400).json({ message: "이미지 경로가 없습니다." });
+  }
+
+  console.log("uploadImage API에서 받은 경로:", profile_image);
+
+  return res.json({
+    success: true,
+    profile_image_url: profile_image,
+  });
+};
+
 // 일반 회원가입 (RESTful 방식) - 완성본
 exports.completeRegister = async (req, res) => {
   try {

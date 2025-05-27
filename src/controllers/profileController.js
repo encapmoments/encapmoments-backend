@@ -6,8 +6,9 @@ const bcrypt = require("bcryptjs");
 exports.updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { nickname, email, password } = req.body;
-    const newImage = req.file ? `/uploads/${req.file.filename}` : null;
+    const { nickname, email, password, profile_image } = req.body;
+    // const { nickname, email, password } = req.body;
+    // const newImage = req.file ? `http://3.38.233.150/uploads/${req.file.filename}` : null;
 
     // 기존 이미지 경로 불러오기
     const user = await userService.findUserWithProfile(userId);
@@ -27,22 +28,23 @@ exports.updateProfile = async (req, res) => {
     // 프로필 테이블 업데이트 또는 삽입
     const profileData = {};
     if (nickname) profileData.nickname = nickname;
-    if (newImage) profileData.profile_image = newImage;
+    // if (newImage) profileData.profile_image = newImage;
+    if (profile_image) profileData.profile_image = profile_image;
     await userService.upsertProfile(userId, profileData);
 
     // 기존 이미지 삭제
-    if (newImage && oldImagePath && oldImagePath !== newImage) {
-      const cleanedPath = oldImagePath.startsWith("/") ? oldImagePath.slice(1) : oldImagePath;
-      const fullOldPath = path.join(__dirname, "../public", cleanedPath);
-      console.log("기존 이미지 경로:", fullOldPath);
+//    if (newImage && oldImagePath && oldImagePath !== newImage) {
+//      const cleanedPath = oldImagePath.startsWith("/") ? oldImagePath.slice(1) : oldImagePath;
+//      const fullOldPath = path.join(__dirname, "../public", cleanedPath);
+//      console.log("기존 이미지 경로:", fullOldPath);
 
-      if (fs.existsSync(fullOldPath)) {
-        fs.unlinkSync(fullOldPath);
-        console.log("기존 이미지 삭제 완료");
-      } else {
-        console.log("기존 이미지 파일이 존재하지 않음");
-      }
-    }
+//      if (fs.existsSync(fullOldPath)) {
+//        fs.unlinkSync(fullOldPath);
+//        console.log("기존 이미지 삭제 완료");
+//      } else {
+//        console.log("기존 이미지 파일이 존재하지 않음");
+//      }
+//    }
 
     res.json({ message: "프로필 수정 완료" });
   } catch (err) {
