@@ -80,10 +80,10 @@ const updateUserInfo = async (userId, updateData) => {
 };
 
 const findUserWithProfile = async (userId) => {
-  return await prisma.user.findUnique({
-    where: { id: userId },
-    include: { profile: true },
-  });
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  const profile = await prisma.profile.findUnique({ where: { id: userId } });
+
+  return { ...user, profile };
 };
 
 const upsertProfile = async (userId, profileData) => {
@@ -101,67 +101,70 @@ const addFamilyMember = async (userId, memberData) => {
 };
 
 const getFamilyMembers = async (userId) => {
-  return await prisma.album_member.findMany({ where: { id: userId } });
+  // 명세서에 맞게 필요한 필드만 반환
+  return await prisma.album_member.findMany({
+    where: { id: userId },
+    select: { id: true, member_id: true, member_name: true, member_image: true }
+  });
 };
 
-const updateFamilyMember = async (memberId, userId, updatedData) => {
-  const parsedMemberId = parseInt(memberId);
-  const parsedUserId = parseInt(userId);
+const updateFamilyMember = async (memberId, userId, updateData) => {
+  console.log('updateFamilyMember 호출:', { memberId, userId, updateData });
 
+  // 찾는 기준 (복합키)
   const member = await prisma.album_member.findUnique({
-    where: {
-      member_id_id: { member_id: parsedMemberId, id: parsedUserId },
-    },
-  });
-  if (!member) throw new Error("해당 구성원을 찾을 수 없습니다.");
-
-  const oldImage = member.member_image;
-  await prisma.album_member.update({
-    where: {
-      member_id_id: { member_id: parsedMemberId, id: parsedUserId },
-    },
-    data: updatedData,
+    where: { member_id_id: { member_id: parseInt(memberId), id: userId } },
   });
 
-  if (updatedData.member_image && oldImage && oldImage !== updatedData.member_image) {
-    const fullPath = path.join(__dirname, "../public", oldImage);
-    if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
-  }
+  console.log('찾은 멤버:', member);
+
+  if (!member) throw new Error("가족 구성원을 찾을 수 없습니다.");
+
+  return await prisma.album_member.update({
+    where: { member_id_id: { member_id: parseInt(memberId), id: userId } },
+    data: updateData,
+  });
 };
 
 const deleteFamilyMember = async (memberId, userId) => {
-  const member = await prisma.album_member.findUnique({
-    where: {
-      member_id_id: {
-        member_id: parseInt(memberId),
-        id: parseInt(userId),
-      },
-    },
-  });
-
-  if (member?.member_image) {
-    const fullPath = path.join(__dirname, "../public", member.member_image);
-    if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
-  }
-
   return await prisma.album_member.delete({
-    where: {
-      member_id_id: {
-        member_id: parseInt(memberId),
-        id: parseInt(userId),
-      },
-    },
+    where: { member_id_id: { member_id: parseInt(memberId), id: userId } },
   });
 };
 
 const getUserMissions = async (userId) => {
+  // 명세서에 맞게 필드명 변경
   const daily = await prisma.daily_mission.findMany({
     where: { id: userId, is_completed: true },
+    select: {
+      daily_title: true,
+      reward: true,
+      created_at: true
+    }
   });
   const weekly = await prisma.weekly_mission.findMany({
     where: { id: userId, is_completed: true },
+    select: {
+      weekly_title: true,
+      reward: true,
+      created_at: true,
+      weekly_image: true
+    }
   });
-  return { daily, weekly };
+  // 필드명 변환
+  return {
+    daily: daily.map(d => ({
+      mission_title: d.daily_title,
+      reward: d.reward,
+      created_at: d.created_at
+    })),
+    weekly: weekly.map(w => ({
+      mission_title: w.weekly_title,
+      reward: w.reward,
+      created_at: w.created_at,
+      mission_image: w.weekly_image
+    }))
+  };
 };
 
 const createAlbumComment = async ({ userId, albumId, memberName, comment_text }) => {
@@ -170,35 +173,54 @@ const createAlbumComment = async ({ userId, albumId, memberName, comment_text })
   });
   if (!member) throw new Error("해당 멤버를 찾을 수 없습니다.");
 
-  return await prisma.album_comment.create({
+  await prisma.album_comment.create({
     data: {
       id: userId,
       album_id: albumId,
       member_id: member.member_id,
       comment_text,
-    },
-    include: {
-      album_member: {
-        select: { member_name: true, member_image: true },
-      },
-    },
+    }
   });
+  return { message: "댓글 등록 성공" }; // <-- 명세서에 맞게 수정
 };
 
-const getAlbumComments = async (albumId, userId) => {
-  return await prisma.album_comment.findMany({
-    where: { album_id: albumId, id: userId },
-    include: {
-      album_member: {
-        select: { member_name: true, member_image: true },
-      },
-    },
+const getAlbumComments = async (albumId) => {
+  // albumId로 해당 앨범의 댓글들 먼저 불러오기
+  const comments = await prisma.album_comment.findMany({
+    where: { album_id: albumId },
     orderBy: { commented_at: "desc" },
   });
+
+  // 각 댓글의 member_id, id (user id)를 가지고 album_member 조회해서 이름과 이미지 붙이기
+  const enrichedComments = await Promise.all(
+    comments.map(async (comment) => {
+      const member = await prisma.album_member.findUnique({
+        where: {
+          member_id_id: {
+            member_id: comment.member_id,
+            id: comment.id,
+          },
+        },
+        select: {
+          member_name: true,
+          member_image: true,
+        },
+      });
+
+      return {
+        comment_id: comment.comment_id,
+        comment_text: comment.comment_text,
+        member_name: member?.member_name || "알 수 없음",
+        member_image: member?.member_image || "/default-profile.png",
+      };
+    })
+  );
+
+  return enrichedComments;
 };
 
 const updateAlbumComment = async ({ userId, albumId, commentId, comment_text }) => {
-  return await prisma.album_comment.update({
+  await prisma.album_comment.update({
     where: {
       comment_id_id_album_id: {
         comment_id: commentId,
@@ -208,10 +230,11 @@ const updateAlbumComment = async ({ userId, albumId, commentId, comment_text }) 
     },
     data: { comment_text },
   });
+  return { message: "댓글 수정 성공" }; // <-- 명세서에 맞게 수정
 };
 
 const deleteAlbumComment = async ({ userId, albumId, commentId }) => {
-  return await prisma.album_comment.delete({
+  await prisma.album_comment.delete({
     where: {
       comment_id_id_album_id: {
         comment_id: commentId,
@@ -220,6 +243,7 @@ const deleteAlbumComment = async ({ userId, albumId, commentId }) => {
       },
     },
   });
+  return { message: "댓글 삭제 성공" }; // <-- 명세서에 맞게 수정
 };
 
 module.exports = {

@@ -9,7 +9,7 @@ const userService = require("../services/userService");
 // storage 설정
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "public/uploads/");
+    cb(null, path.join(__dirname, "../public/uploads/"));
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
@@ -32,6 +32,7 @@ router.get("/me", verifyToken, async (req, res) => {
 
 // 프로필 이미지 업로드 엔드포인트
 router.post("/upload", verifyToken, upload.single("profile_image"), (req, res) => {
+  console.log("업로드된 파일:", req.file); // ✅ 로그 추가
   if (!req.file) {
     return res.status(400).json({ message: "파일이 업로드되지 않았습니다." });
   }
@@ -39,9 +40,12 @@ router.post("/upload", verifyToken, upload.single("profile_image"), (req, res) =
   return res.json({ profile_image_url: imageUrl });
 });
 
+
 // 프로필 정보 수정 엔드포인트 (이미지 포함)
 router.put("/", verifyToken, upload.single("profile_image"), profileController.updateProfile);
 // 프로필 정보 수정 (POST도 허용)
 router.post("/", verifyToken, upload.single("profile_image"), profileController.updateProfile);
+
+// 모든 엔드포인트에 verifyToken 적용 (문제 없음)
 
 module.exports = router;

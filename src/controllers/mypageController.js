@@ -16,7 +16,7 @@ exports.getUserMissionData = async (req, res) => {
   try {
     const userId = req.user.id;
     const { daily, weekly } = await userService.getUserMissions(userId);
-    res.json({ daily, weekly });
+    res.json({ daily, weekly }); // 명세서에 맞는 구조
   } catch (err) {
     console.error("미션 데이터 JSON 응답 오류:", err);
     res.status(500).json({ message: "미션 정보를 불러오는 중 오류 발생" });

@@ -44,7 +44,7 @@ exports.updateProfile = async (req, res) => {
       }
     }
 
-    res.json({ message: "프로필 수정 완료" });
+    res.json({ message: "프로필 수정 완료" }); // 명세서에 맞는 구조
   } catch (err) {
     console.error("프로필 수정 오류:", err);
     res.status(500).json({ message: "프로필 수정 중 오류 발생" });

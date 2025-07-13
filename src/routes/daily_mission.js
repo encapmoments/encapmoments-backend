@@ -10,3 +10,4 @@ router.get('/', dailyController.getDailyMissions);
 router.get('/:daily_id', dailyController.getDailyMissionDetail);
 
 module.exports = router;
+// verifyToken 미들웨어가 index.js에서 라우터 전체에 적용됨 (문제 없음)

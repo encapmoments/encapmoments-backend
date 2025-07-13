@@ -28,4 +28,6 @@ router.post("/uploadImage", upload.single("profile_image"), (req, res) => {
 // 일반 회원가입 처리 (2단계 - 모든 정보 한 번에 받기)
 router.post("/register", authController.completeRegister);
 
+// /logout, /refreshToken 등 인증 필요한 곳에 verifyToken 적용 (문제 없음)
+
 module.exports = router;

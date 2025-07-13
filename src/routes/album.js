@@ -23,3 +23,5 @@ router.patch('/:album_id', albumController.updateAlbum);
 
 
 module.exports = router;
+
+// 라우터 자체가 verifyToken 미들웨어로 감싸져 있음 (index.js에서)

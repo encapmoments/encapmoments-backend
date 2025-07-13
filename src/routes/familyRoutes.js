@@ -7,7 +7,7 @@ const userService = require("../services/userService");
 
 // storage 설정
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "public/uploads"),
+  destination: (req, file, cb) => cb(null, path.join(__dirname, "../public/uploads")),
   filename: (req, file, cb) => {
     const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
     cb(null, unique + path.extname(file.originalname));
@@ -76,5 +76,5 @@ router.delete("/members/:id", verifyToken, async (req, res) => {
   }
 });
 
-
 module.exports = router;
+// 모든 엔드포인트에 verifyToken 적용 (문제 없음)

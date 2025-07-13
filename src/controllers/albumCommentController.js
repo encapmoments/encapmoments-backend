@@ -24,14 +24,19 @@ exports.fetchMembers = async (req, res) => {
 exports.fetchComments = async (req, res) => {
   try {
     const albumId = Number(req.params.albumId);
-    const userId = req.user.id;
-    console.log("댓글 조회 요청:", { albumId, userId });
-
     if (isNaN(albumId)) {
       return res.status(400).json({ error: "유효하지 않은 albumId입니다." });
     }
-    const comments = await getAlbumComments(albumId, userId);
-    res.json(comments);
+    const comments = await getAlbumComments(albumId); // userId는 불필요
+
+    const result = comments.map(c => ({
+      comment_id: c.comment_id,
+      comment_text: c.comment_text,
+      member_name: c.member_name,
+      member_image: c.member_image,
+    }));
+
+    res.json(result);
   } catch (error) {
     console.error("댓글 조회 실패:", error);
     res.status(500).json({ error: "댓글 조회 실패" });
@@ -44,8 +49,8 @@ exports.postComment = async (req, res) => {
     const albumId = parseInt(req.params.albumId);
     const userId = req.user.id;
     const { memberName, comment_text } = req.body;
-    const newComment = await createAlbumComment({ userId, albumId, memberName, comment_text });
-    res.status(201).json(newComment);
+    await createAlbumComment({ userId, albumId, memberName, comment_text });
+    res.status(201).json({ message: "댓글 등록 성공" }); // <-- 명세서에 맞게 수정
   } catch (error) {
     console.error("댓글 작성 실패:", error.message);
     res.status(400).json({ error: error.message });
@@ -71,8 +76,8 @@ exports.patchComment = async (req, res) => {
       return res.status(400).json({ error: "요청 값 누락" });
     }
 
-    const updated = await updateAlbumComment({ userId, albumId, commentId, comment_text });
-    res.json(updated);
+    await updateAlbumComment({ userId, albumId, commentId, comment_text });
+    res.json({ message: "댓글 수정 성공" }); // <-- 명세서에 맞게 수정
   } catch (error) {
     console.error("❌ 댓글 수정 실패:", error);
     res.status(400).json({ error: error.message });
@@ -87,7 +92,7 @@ exports.deleteComment = async (req, res) => {
     const commentId = parseInt(req.params.commentId);
     const userId = req.user.id;
     await deleteAlbumComment({ userId, albumId, commentId });
-    res.status(204).send(); // No Content
+    res.json({ message: "댓글 삭제 성공" }); // <-- 명세서에 맞게 수정
   } catch (error) {
     console.error("댓글 삭제 실패:", error.message);
     res.status(400).json({ error: error.message });
