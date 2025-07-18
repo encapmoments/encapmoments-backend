@@ -19,14 +19,14 @@ const albumCommentRoutes = require("./routes/albumCommentRoutes");
 const verifyToken = require("./middlewares/authMiddleware");
 const app = express();
 
-app.use(session({
-  secret: process.env.SESSION_SECRET || "secret-key",
-  resave: false,
-  saveUninitialized: true,
-}));
+// app.use(session({
+//   secret: process.env.SESSION_SECRET || "secret-key",
+//   resave: false,
+//   saveUninitialized: true,
+// }));
 
 
-app.use(cookieParser());
+// app.use(cookieParser());
 app.use("/static", express.static(path.join(__dirname, "public")));
 app.use("/uploads", express.static(path.join(__dirname, "src/public/uploads")));
 app.use("/icons", express.static(path.join(__dirname, "src/public/icons")));
