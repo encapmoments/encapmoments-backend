@@ -16,7 +16,8 @@ exports.completeMission = async (userId, missionType, missionId) => {
         }
       });
 
-      if (!mission || mission.is_completed) throw new Error('이미 완료했거나 존재하지 않는 미션입니다.');
+      if (!mission) throw new Error('존재하지 않는 미션입니다.');
+      if (mission.is_completed) throw new Error('이미 완료한 미션입니다.');
 
       reward = mission.reward;
 

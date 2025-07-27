@@ -1,5 +1,5 @@
-// const fetch = require("node-fetch");
-const res = await fetch("https://api.example.com");
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+
 const jwt = require("jsonwebtoken");
 const userService = require("../services/userService");
 
