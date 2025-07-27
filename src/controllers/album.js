@@ -2,47 +2,61 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const moment = require("moment-timezone");
 const { completeMission } = require("../services/missionService");
+const { uploadToS3 } = require("../services/s3Service");
 
-// 앨범 생성
+
 exports.createAlbum = async (req, res) => {
   const userId = req.user.id;
-  const { album_title, album_tag, album_image, location, mission_type, mission_id } = req.body;
-  
-  if (!album_title) {
-    return res.status(400).json({ message: '앨범 제목은 필수입니다.', album_id: album.album_id});
+  const { album_title, album_tag, location, mission_type, mission_id } = req.body;
+
+  if (!album_title || !mission_type || !mission_id) {
+    return res.status(400).json({ message: '앨범 제목, 미션 타입, 미션 ID는 필수입니다.' });
   }
 
   const nowKST = moment().tz("Asia/Seoul").toDate();
 
   try {
+    
+    //  미션 완료 처리
+    try {
+       await completeMission(userId, mission_type, parseInt(mission_id));
+    } catch (err) {
+       console.error(err);
+       return res.status(400).json({ message: err.message });
+     }
+    
 
-    if (mission_type && mission_id) {
+    //  S3 업로드
+    let album_image_url = null;
+    if (req.file) {
       try {
-        const result = await completeMission(userId, mission_type, parseInt(mission_id));
-      } catch (err) {
-        console.error(err); // 서버 로그용
-        return res.status(400).json({ message: err.message }); // 클라이언트 응답용
+        album_image_url = await uploadToS3(req.file, 'albums');
+      } catch (uploadErr) {
+        console.error("S3 업로드 실패:", uploadErr);
+        return res.status(500).json({ message: "이미지 업로드 실패" });
       }
     }
 
+    //  DB 저장
     await prisma.album.create({
       data: {
         id: userId,
         album_title,
         album_tag,
-        album_image,
+        album_image: album_image_url,
         location,
         created_at: nowKST,
         uploaded_at: nowKST
       }
     });
-    res.status(201).json({success: true, message: '앨범 생성 성공'}); // success 추가 (프론트용)
-  } catch(err){
+
+    res.status(201).json({ success: true, message: '앨범 생성 성공' });
+
+  } catch (err) {
     console.error('앨범 생성 실패:', err);
     res.status(500).json({ message: '서버 오류' });
   }
 };
-
 
 // 앨범 목록 조회
 exports.getUserAlbums = async (req, res) => {
