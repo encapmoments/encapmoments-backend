@@ -1,7 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const { openai } = require('../utils/openai');
-
+const { uploadUrlToS3 } = require("../services/s3Service");
 
 // 전체 주간 미션 조회
 exports.getWeeklyMissions = async (req, res) => {
@@ -125,7 +125,11 @@ exports.generateWeeklyMissions = async (req, res) => {
           size: '1024x1024',
           n: 1
         });
-        return dalleRes.data[0].url;
+        const dalleImageUrl = dalleRes.data[0].url;
+        //  S3 업로드
+        const s3ImageUrl = await uploadUrlToS3(dalleImageUrl,"mission",  "weekly_mission");
+
+        return s3ImageUrl;
       })
     );
 
@@ -139,7 +143,7 @@ exports.generateWeeklyMissions = async (req, res) => {
             id: userId,
             weekly_title: m.weekly_title,
             weekly_description: m.weekly_description,
-            weekly_image: imageUrls[i],
+            weekly_image: imageUrls[i], 
             reward: 100,
             is_completed: false,
             created_at: now,
