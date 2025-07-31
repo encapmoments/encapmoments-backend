@@ -7,7 +7,9 @@ router.get('/search', albumController.searchAlbums);
 
 
 // 앨범 생성
-router.post('/generate', albumController.createAlbum);
+//router.post('/generate', albumController.createAlbum);
+const upload = require("../middlewares/upload");
+router.post('/generate', upload.single("album_image"), albumController.createAlbum);
 
 // 앨범 목록 조회
 router.get('/', albumController.getUserAlbums);
