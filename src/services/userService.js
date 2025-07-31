@@ -87,6 +87,7 @@ const findUserWithProfile = async (userId) => {
 };
 
 const upsertProfile = async (userId, profileData) => {
+  const id = typeof userId === "string" ? parseInt(userId, 10) : userId;
   return await prisma.profile.upsert({
     where: { id: userId },
     update: profileData,
