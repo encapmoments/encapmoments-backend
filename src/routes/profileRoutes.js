@@ -5,18 +5,10 @@ const multer = require("multer");
 const path = require("path");
 const verifyToken = require("../middlewares/authMiddleware");
 const userService = require("../services/userService");
+const { uploadToS3 } = require("../services/s3Service");
 
 // storage 설정
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, "../public/uploads/"));
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  },
-});
-
+const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 // profile/me: 현재 로그인한 사용자 정보 JSON 응답
@@ -31,13 +23,20 @@ router.get("/me", verifyToken, async (req, res) => {
 });
 
 // 프로필 이미지 업로드 엔드포인트
-router.post("/upload", verifyToken, upload.single("profile_image"), (req, res) => {
-  console.log("업로드된 파일:", req.file); // ✅ 로그 추가
+router.post("/upload", verifyToken, upload.single("profile_image"), async (req, res) => {
+  console.log("업로드된 파일:", req.file); 
+
   if (!req.file) {
     return res.status(400).json({ message: "파일이 업로드되지 않았습니다." });
   }
-  const imageUrl = `/uploads/${req.file.filename}`;
-  return res.json({ profile_image_url: imageUrl });
+  
+  try { 
+	  const imageUrl = await uploadToS3(req.file, 'profile_images');
+	  return res.json({ profile_image_url: imageUrl });
+  } catch (err) { 
+	  console.error("S3 업로드 오류:", err);
+	  res.status(500).json({message: "S3 업로드 중 오류 발생" });
+  }
 });
 
 

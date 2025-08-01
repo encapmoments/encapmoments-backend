@@ -1,5 +1,5 @@
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-
+const { uploadToS3 } = require("../services/s3Service");
 const jwt = require("jsonwebtoken");
 const userService = require("../services/userService");
 

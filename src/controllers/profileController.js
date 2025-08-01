@@ -27,22 +27,30 @@ exports.updateProfile = async (req, res) => {
     // 프로필 테이블 업데이트 또는 삽입
     const profileData = {};
     if (nickname) profileData.nickname = nickname;
-    if (newImage) profileData.profile_image = newImage;
-    await userService.upsertProfile(userId, profileData);
+    if (newImage) {
+	    let album_image_url = nuill;
+	    try {
+		    album_image_url = await uploadToS3(newImage, 'profiles');
+	    } catch (uploadErr) {
+		    console.error("S3 업로드 실패:", uploadErr);
+		    return res.status(500).json({ message: "이미지 업로드 실패"});
+	    }
 
-    // 기존 이미지 삭제
-    if (newImage && oldImagePath && oldImagePath !== newImage) {
-      const cleanedPath = oldImagePath.startsWith("/") ? oldImagePath.slice(1) : oldImagePath;
-      const fullOldPath = path.join(__dirname, "../public", cleanedPath);
-      console.log("기존 이미지 경로:", fullOldPath);
+	    profileData.profile_image = album_image_url;
 
-      if (fs.existsSync(fullOldPath)) {
-        fs.unlinkSync(fullOldPath);
-        console.log("기존 이미지 삭제 완료");
-      } else {
-        console.log("기존 이미지 파일이 존재하지 않음");
-      }
+	    // 기존 이미지 삭제(S3에서 삭제)
+	    if (oldImagePath) {
+		    const oldImageKey = oldImagePath.split('/').pop();
+		    try {
+			    await deleteFromS3(oldImageKey);
+			    console.log("기존 이미지 S3에서 삭제 완료");
+		    } catch (delteErr) {
+			    console.error("기존 이미지 삭제 실패:", deleteErr);
+		    }
+	    }
     }
+    
+    await userService.upsertProfile(userId, profileData);
 
     res.json({ message: "프로필 수정 완료" }); // 명세서에 맞는 구조
   } catch (err) {

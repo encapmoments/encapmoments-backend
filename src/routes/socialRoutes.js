@@ -9,6 +9,6 @@ router.get("/naver/callback", socialController.naverLogin);
 router.get("/kakao/callback", socialController.kakaoLogin);
 
 // 소셜 회원가입 (2단계 - 닉네임 + 프로필 이미지 경로 전달)
-router.post("/social/register", verifyToken, socialController.registerSocialUser); // /social/register에 verifyToken 적용 (문제 없음)
+router.post("/social/register", verifyToken, socialController.registerSocialUser);
 
 module.exports = router;

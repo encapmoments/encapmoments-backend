@@ -47,3 +47,13 @@ exports.uploadUrlToS3 = async (url, file, folder) => { // 여기에서의 file�
   // 4. 이미지 URL 반환
   return result.Location;
 };
+
+exports.deleteFromS3 = (fileKey) => {
+	const params = {
+		Bucket: process.env.AWS_S3_BUCKET,
+		Key: fileKey,
+	};
+
+	return s3.deleteObject(params).promise();
+};
+

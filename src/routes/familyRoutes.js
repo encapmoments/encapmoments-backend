@@ -1,22 +1,15 @@
 const express = require("express");
 const router = express.Router();
-const path = require("path");
 const multer = require("multer");
-const verifyToken = require("../middlewares/authMiddleware");
-const userService = require("../services/userService");
+const { uploadToS3 } = require("../services/s3Service");  // S3 업로드 함수 추가
+const userService = require("../services/userService"); 
 
-// storage 설정
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, "../public/uploads")),
-  filename: (req, file, cb) => {
-    const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, unique + path.extname(file.originalname));
-  }
-});
+// multer storage 설정 (S3 업로드에서는 사용되지 않음)
+const storage = multer.memoryStorage();  // 메모리에 저장하여 바로 S3로 업로드 가능
 const upload = multer({ storage });
 
 // 구성원 목록 조회
-router.get("/members", verifyToken, async (req, res) => {
+router.get("/members", async (req, res) => {
   try {
     const members = await userService.getFamilyMembers(req.user.id);
     res.json(members);
@@ -27,15 +20,24 @@ router.get("/members", verifyToken, async (req, res) => {
 });
 
 // 구성원 추가 (이미지 업로드 포함)
-router.post("/members", verifyToken, upload.single("member_image"), async (req, res) => {
+router.post("/members", upload.single("member_image"), async (req, res) => {
   try {
     const { member_name } = req.body;
-    const member_image = req.file ? `/uploads/${req.file.filename}` : null;
+    let member_image = null;
+
+    // 파일이 업로드되면 S3에 업로드하고 URL 반환
+    if (req.file) {
+      member_image = await uploadToS3(req.file, 'family_members'); // S3 'family_members' 폴더에 업로드
+    }
+
     if (!member_name || !member_image) {
       return res.status(400).json({ message: "이름과 이미지가 필요합니다." });
     }
+
     await userService.addFamilyMember(req.user.id, { member_name, member_image });
-    res.json({ message: "구성원 등록 완료" });
+
+    // 클라이언트에 member_image URL도 함께 반환
+    res.json({ message: "구성원 등록 완료", member_image_url: member_image });
   } catch (err) {
     console.error("구성원 등록 오류:", err);
     res.status(500).json({ message: "구성원 추가 중 오류 발생" });
@@ -43,15 +45,22 @@ router.post("/members", verifyToken, upload.single("member_image"), async (req, 
 });
 
 // 구성원 수정
-router.put("/members/:id", verifyToken, upload.single("member_image"), async (req, res) => {
+router.put("/members/:id", upload.single("member_image"), async (req, res) => {
   try {
     const member_name = req.body.member_name;
-    const member_image = req.file ? `/uploads/${req.file.filename}` : null;
+    let member_image = null;
+
+    // 파일이 업로드되면 S3에 업로드하고 URL 반환
+    if (req.file) {
+      member_image = await uploadToS3(req.file, 'family_members'); // S3 'family_members' 폴더에 업로드
+    }
 
     const memberId = req.params.id;
     const userId = req.user.id;
     await userService.updateFamilyMember(memberId, userId, { member_name, member_image });
-    res.json({ message: "구성원 정보 수정 완료" });
+
+    // 클라이언트에 수정된 member_image URL도 함께 반환
+    res.json({ message: "구성원 정보 수정 완료", member_image_url: member_image || req.body.member_image }); 
   } catch (err) {
     console.error("구성원 수정 오류:", err);
     res.status(500).json({ message: "구성원 수정 중 오류 발생" });
@@ -59,9 +68,9 @@ router.put("/members/:id", verifyToken, upload.single("member_image"), async (re
 });
 
 // 구성원 삭제
-router.delete("/members/:id", verifyToken, async (req, res) => {
+router.delete("/members/:id", async (req, res) => {
   const memberId = req.params.id;
-  const userId = req.user?.id; // 🔍 여기서 undefined이면 문제 발생
+  const userId = req.user?.id;
 
   if (!userId) {
     return res.status(400).json({ error: "유저 정보 없음" });
@@ -77,4 +86,4 @@ router.delete("/members/:id", verifyToken, async (req, res) => {
 });
 
 module.exports = router;
-// 모든 엔드포인트에 verifyToken 적용 (문제 없음)
+

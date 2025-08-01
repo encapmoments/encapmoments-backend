@@ -24,17 +24,12 @@ const app = express();
 //   resave: false,
 //   saveUninitialized: true,
 // }));
-
-
 // app.use(cookieParser());
-app.use("/static", express.static(path.join(__dirname, "public")));
-app.use("/uploads", express.static(path.join(__dirname, "src/public/uploads")));
-app.use("/icons", express.static(path.join(__dirname, "src/public/icons")));
-app.use("/missions", express.static(path.join(__dirname, "src/public/missions")));
+
+// API 라우팅
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
-// API 라우팅
 app.use("/auth", authRoutes);
 app.use("/auth", socialRoutes);
 app.use("/register", registerRoutes);
@@ -55,6 +50,5 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
-  // console.log(`✅ 서버 실행 중: http://3.39.8.24:${PORT}`);
-  console.log(`✅ 서버 실행 중: http://localhost:${PORT}`);
+  console.log(`✅ 서버 실행 중: http://0.0.0.0:${PORT}`);
 });

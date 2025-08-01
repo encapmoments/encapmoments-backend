@@ -1,5 +1,3 @@
-const fs = require("fs");
-const path = require("path");
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
@@ -87,10 +85,9 @@ const findUserWithProfile = async (userId) => {
 };
 
 const upsertProfile = async (userId, profileData) => {
-  const id = typeof userId === "string" ? parseInt(userId, 10) : userId;
   return await prisma.profile.upsert({
     where: { id: userId },
-    update: profileData,
+    update: profileData, // 새로운 이미지 URL을 업데이트
     create: { id: userId, ...profileData },
   });
 };

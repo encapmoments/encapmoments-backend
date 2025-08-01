@@ -2,25 +2,28 @@ const upload = require("../middlewares/upload");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const userService = require("../services/userService");
+const { uploadToS3 } = require("../services/s3Service");
 
 // 프로필 이미지 업로드 후 닉네임 입력 폼 렌더링 (사용 안 함, 참고용)
-exports.handleImageUpload = [
-  upload.single("profile_image"),
-  (req, res) => {
-    const imagePath = `/uploads/${req.file.filename}`;
-    // res.render("registerForm", { profile_image: imagePath });
-  },
-];
+//exports.handleImageUpload = [
+//  upload.single("profile_image"),
+//  (req, res) => {
+//    const imagePath = `/uploads/${req.file.filename}`;
+//    // res.render("registerForm", { profile_image: imagePath });
+//  },
+//];
 
 // 일반 회원가입 (RESTful 방식) - 완성본
 exports.completeRegister = async (req, res) => {
   try {
-    const { email, password, nickname, profile_image } = req.body;
+    const { email, password, nickname} = req.body;
 
-    if (!email || !password || !nickname || !profile_image) {
+    if (!email || !password || !nickname || !req.file) {
       return res.status(400).json({ message: "모든 필드를 입력해야 합니다." });
     }
 
+    const profile_image = await uploadToS3(req.file,'profile_images');
+	  
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await userService.createUser(email, hashedPassword);
     await userService.upsertProfile(user.id, { nickname, profile_image });
