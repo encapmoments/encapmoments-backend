@@ -4,28 +4,35 @@ const jwt = require("jsonwebtoken");
 const userService = require("../services/userService");
 const { uploadToS3 } = require("../services/s3Service");
 
-// 프로필 이미지 업로드 후 닉네임 입력 폼 렌더링 (사용 안 함, 참고용)
-//exports.handleImageUpload = [
-//  upload.single("profile_image"),
-//  (req, res) => {
-//    const imagePath = `/uploads/${req.file.filename}`;
-//    // res.render("registerForm", { profile_image: imagePath });
-//  },
-//];
 
-// 일반 회원가입 (RESTful 방식) - 완성본
+// 일반 회원가입 (RESTful 방식)
 exports.completeRegister = async (req, res) => {
   try {
-    const { email, password, nickname} = req.body;
+    const { email, password, nickname, profile_image: profileImageUrl } = req.body;
 
-    if (!email || !password || !nickname || !req.file) {
+    if (!email || !password || !nickname) {
       return res.status(400).json({ message: "모든 필드를 입력해야 합니다." });
     }
 
-    const profile_image = await uploadToS3(req.file,'profile_images');
-	  
+    // 이메일 중복 확인
+    const isDuplicate = await userService.isEmailDuplicate(email);
+    if (isDuplicate) {
+      return res.status(400).json({ message: "이미 사용 중인 이메일입니다." });
+    }
+
+    // 이미지 처리: 파일이 있으면 S3 업로드, 없으면 body URL 사용
+    let profile_image = profileImageUrl || null;
+    if (req.file) {
+      profile_image = await uploadToS3(req.file, 'profile_images');
+    }
+
+    // 비밀번호 해싱
     const hashedPassword = await bcrypt.hash(password, 10);
+
+    // 유저 생성
     const user = await userService.createUser(email, hashedPassword);
+
+    // 프로필 생성 또는 업데이트
     await userService.upsertProfile(user.id, { nickname, profile_image });
 
     res.json({ success: true, message: "회원가입 성공" });
@@ -81,16 +88,16 @@ exports.logout = async (req, res) => {
     if (req.user && req.user.id) {
       await userService.clearRefreshToken(req.user.id);
     }
-    res.json({success: true}); // success 추가 (프론트용)
+    res.json({success: true}); 
 
   } catch (error) {
     console.error("로그아웃 예외:", error);
-  } finally {
+  } //finally {
     // res.clearCookie("token");
     // res.clearCookie("refreshToken");
     // res.redirect("/");
 
-  }
+  //}
 };
 
 // Access Token 재발급

@@ -93,6 +93,14 @@ const upsertProfile = async (userId, profileData) => {
 };
 
 const addFamilyMember = async (userId, memberData) => {
+  // member_age를 숫자로 변환
+  if (memberData.member_age !== undefined && memberData.member_age !== null) {
+    const age = parseInt(memberData.member_age, 10);
+    memberData.member_age = isNaN(age) ? null : age;
+  } else {
+    memberData.member_age = null;
+  }
+
   return await prisma.album_member.create({
     data: { ...memberData, id: userId },
   });
@@ -102,27 +110,52 @@ const getFamilyMembers = async (userId) => {
   // 명세서에 맞게 필요한 필드만 반환
   return await prisma.album_member.findMany({
     where: { id: userId },
-    select: { id: true, member_id: true, member_name: true, member_image: true }
+    select: { 
+      id: true, 
+      member_id: true, 
+      member_name: true, 
+      member_image: true,
+      member_gender: true, 
+      member_age: true
+     }
   });
 };
 
 const updateFamilyMember = async (memberId, userId, updateData) => {
-  console.log('updateFamilyMember 호출:', { memberId, userId, updateData });
+  // member_age 변환
+  if (updateData.member_age !== undefined) {
+    updateData.member_age = parseInt(updateData.member_age, 10);
+    if (isNaN(updateData.member_age)) delete updateData.member_age;
+  }
 
-  // 찾는 기준 (복합키)
-  const member = await prisma.album_member.findUnique({
-    where: { member_id_id: { member_id: parseInt(memberId), id: userId } },
+  // updateData에서 null 또는 undefined인 값 제거
+  Object.keys(updateData).forEach((key) => {
+    if (updateData[key] === undefined || updateData[key] === null) {
+      delete updateData[key];
+    }
   });
 
-  console.log('찾은 멤버:', member);
+  // 업데이트 전 데이터 조회
+  const member = await prisma.album_member.findUnique({
+    where: { member_id_id: { member_id: parseInt(memberId, 10), id: userId } },
+  });
 
   if (!member) throw new Error("가족 구성원을 찾을 수 없습니다.");
 
-  return await prisma.album_member.update({
-    where: { member_id_id: { member_id: parseInt(memberId), id: userId } },
+  console.log("업데이트 전 멤버:", member);
+  console.log("적용할 업데이트 데이터:", updateData);
+
+  const updatedMember = await prisma.album_member.update({
+    where: { member_id_id: { member_id: parseInt(memberId, 10), id: userId } },
     data: updateData,
   });
+
+  console.log("업데이트 후 멤버:", updatedMember);
+
+  return updatedMember;
 };
+
+
 
 const deleteFamilyMember = async (memberId, userId) => {
   return await prisma.album_member.delete({
@@ -131,7 +164,6 @@ const deleteFamilyMember = async (memberId, userId) => {
 };
 
 const getUserMissions = async (userId) => {
-  // 명세서에 맞게 필드명 변경
   const daily = await prisma.daily_mission.findMany({
     where: { id: userId, is_completed: true },
     select: {
@@ -179,7 +211,7 @@ const createAlbumComment = async ({ userId, albumId, memberName, comment_text })
       comment_text,
     }
   });
-  return { message: "댓글 등록 성공" }; // <-- 명세서에 맞게 수정
+  return { message: "댓글 등록 성공" }; 
 };
 
 const getAlbumComments = async (albumId) => {
@@ -228,7 +260,7 @@ const updateAlbumComment = async ({ userId, albumId, commentId, comment_text }) 
     },
     data: { comment_text },
   });
-  return { message: "댓글 수정 성공" }; // <-- 명세서에 맞게 수정
+  return { message: "댓글 수정 성공" }; 
 };
 
 const deleteAlbumComment = async ({ userId, albumId, commentId }) => {
@@ -241,7 +273,7 @@ const deleteAlbumComment = async ({ userId, albumId, commentId }) => {
       },
     },
   });
-  return { message: "댓글 삭제 성공" }; // <-- 명세서에 맞게 수정
+  return { message: "댓글 삭제 성공" }; 
 };
 
 module.exports = {

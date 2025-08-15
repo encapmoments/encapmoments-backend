@@ -27,7 +27,7 @@ exports.fetchComments = async (req, res) => {
     if (isNaN(albumId)) {
       return res.status(400).json({ error: "유효하지 않은 albumId입니다." });
     }
-    const comments = await getAlbumComments(albumId); // userId는 불필요
+    const comments = await getAlbumComments(albumId); 
 
     const result = comments.map(c => ({
       comment_id: c.comment_id,
@@ -50,7 +50,7 @@ exports.postComment = async (req, res) => {
     const userId = req.user.id;
     const { memberName, comment_text } = req.body;
     await createAlbumComment({ userId, albumId, memberName, comment_text });
-    res.status(201).json({ message: "댓글 등록 성공" }); // <-- 명세서에 맞게 수정
+    res.status(201).json({ message: "댓글 등록 성공" }); 
   } catch (error) {
     console.error("댓글 작성 실패:", error.message);
     res.status(400).json({ error: error.message });
@@ -65,7 +65,7 @@ exports.patchComment = async (req, res) => {
     const userId = req.user?.id;
     const { comment_text } = req.body;
 
-    console.log("🛠 댓글 수정 요청", {
+    console.log("댓글 수정 요청", {
       albumId,
       commentId,
       userId,
@@ -77,9 +77,9 @@ exports.patchComment = async (req, res) => {
     }
 
     await updateAlbumComment({ userId, albumId, commentId, comment_text });
-    res.json({ message: "댓글 수정 성공" }); // <-- 명세서에 맞게 수정
+    res.json({ message: "댓글 수정 성공" }); 
   } catch (error) {
-    console.error("❌ 댓글 수정 실패:", error);
+    console.error("댓글 수정 실패:", error);
     res.status(400).json({ error: error.message });
   }
 };
@@ -92,7 +92,7 @@ exports.deleteComment = async (req, res) => {
     const commentId = parseInt(req.params.commentId);
     const userId = req.user.id;
     await deleteAlbumComment({ userId, albumId, commentId });
-    res.json({ message: "댓글 삭제 성공" }); // <-- 명세서에 맞게 수정
+    res.json({ message: "댓글 삭제 성공" }); 
   } catch (error) {
     console.error("댓글 삭제 실패:", error.message);
     res.status(400).json({ error: error.message });
