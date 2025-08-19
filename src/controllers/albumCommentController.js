@@ -46,11 +46,13 @@ exports.fetchComments = async (req, res) => {
 // 댓글 작성
 exports.postComment = async (req, res) => {
   try {
-    const albumId = parseInt(req.params.albumId);
-    const userId = req.user.id;
-    const { memberName, comment_text } = req.body;
-    await createAlbumComment({ userId, albumId, memberName, comment_text });
-    res.status(201).json({ message: "댓글 등록 성공" }); 
+    const album_id = parseInt(req.params.albumId, 10);
+    const userId = req.user.id;           // 현재 로그인 유저 ID
+    const { member_name, comment_text } = req.body;
+    
+    await createAlbumComment({ userId, album_id, member_name, comment_text });
+    
+    res.status(201).json({ message: "댓글 등록 성공" });
   } catch (error) {
     console.error("댓글 작성 실패:", error.message);
     res.status(400).json({ error: error.message });

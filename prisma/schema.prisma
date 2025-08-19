@@ -24,7 +24,7 @@ model album {
 }
 
 model album_comment {
-  id           Int
+  id           Int      
   album_id     Int
   comment_id   Int       @default(autoincrement())
   member_id    Int

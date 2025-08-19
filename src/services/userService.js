@@ -197,25 +197,68 @@ const getUserMissions = async (userId) => {
   };
 };
 
-const createAlbumComment = async ({ userId, albumId, memberName, comment_text }) => {
+
+// 컨트롤러
+exports.postComment = async (req, res) => {
+  try {
+    const album_id = parseInt(req.params.albumId, 10);
+    const userId = req.user.id;           // 현재 로그인 유저 ID
+    const { member_name, comment_text } = req.body;
+    
+    await createAlbumComment({ userId, album_id, member_name, comment_text });
+    
+    res.status(201).json({ message: "댓글 등록 성공" });
+  } catch (error) {
+    console.error("댓글 작성 실패:", error.message);
+    res.status(400).json({ error: error.message });
+  }
+};
+
+// 서비스
+const createAlbumComment = async ({ userId, album_id, member_name, comment_text }) => {
+  if (!member_name) throw new Error("member_name이 필요합니다.");
+
+  const albumIdInt = parseInt(album_id, 10);
+  if (isNaN(albumIdInt)) throw new Error("유효한 album_id가 필요합니다.");
+
+  const album = await prisma.album.findFirst({
+    where: { album_id: albumIdInt }
+  });
+  if (!album) throw new Error("해당 앨범이 존재하지 않습니다.");
+
   const member = await prisma.album_member.findFirst({
-    where: { id: userId, member_name: memberName },
+    where: { id: userId, member_name }  // 유저 ID와 멤버 이름으로 조회
   });
   if (!member) throw new Error("해당 멤버를 찾을 수 없습니다.");
 
   await prisma.album_comment.create({
     data: {
-      id: userId,
-      album_id: albumId,
+      id: userId,                // 필수! 작성자 ID
+      album_id: albumIdInt,
       member_id: member.member_id,
-      comment_text,
+      comment_text
     }
   });
-  return { message: "댓글 등록 성공" }; 
+
+  return { message: "댓글 등록 성공" };
+};
+
+// 댓글 작성 
+const postComment = async (req, res) => { 
+	try { 
+		const albumId = parseInt(req.params.albumId); 
+		const userId = req.user.id; 
+		const { memberName, comment_text } = req.body; 
+		await createAlbumComment({ userId, albumId, memberName, comment_text }); 
+		res.status(201).json({ message: "댓글 등록 성공" }); 
+	} catch (error) { 
+		console.error("댓글 작성 실패:", error.message); 
+		res.status(400).json({ error: error.message }); 
+	} 
 };
 
 const getAlbumComments = async (albumId) => {
-  // albumId로 해당 앨범의 댓글들 먼저 불러오기
+  // albumId로 해당앨범의 댓글들 먼저 불러오기
   const comments = await prisma.album_comment.findMany({
     where: { album_id: albumId },
     orderBy: { commented_at: "desc" },
@@ -298,4 +341,5 @@ module.exports = {
   createAlbumComment,
   updateAlbumComment,
   deleteAlbumComment,
+  postComment
 };
