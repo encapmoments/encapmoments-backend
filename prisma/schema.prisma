@@ -83,6 +83,7 @@ model profile {
   // profile_image String? @db.VarChar(255)
   profile_image String? @db.Text
   points        Int?    @default(0)
+  user_rewards  user_reward[] 
 }
 
 model user {
@@ -153,7 +154,7 @@ model user_reward {
   user_reward_id Int       @id @default(autoincrement())
   user_id        Int
   item_id        Int
-  stock_id       Int?      // optional: 바코드 할당 안 될 수도 있음
+  stock_id       Int?      @unique  // optional: 바코드 할당 안 될 수도 있음
   purchased_at   DateTime  @default(now()) @db.Timestamp(0)
   is_used        Boolean   @default(false)
   used_at        DateTime?
