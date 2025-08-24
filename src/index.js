@@ -16,6 +16,7 @@ const albumRoutes = require("./routes/album");
 const dailyMissionRoutes = require("./routes/daily_mission");
 const weeklyMissionRoutes = require("./routes/weekly_mission");
 const albumCommentRoutes = require("./routes/albumCommentRoutes");
+const marketRoutes = require("./routes/marketRoutes");
 const verifyToken = require("./middlewares/authMiddleware");
 const app = express();
 
@@ -42,6 +43,9 @@ app.use("/album", verifyToken, albumRoutes);
 app.use("/album-comment", albumCommentRoutes);
 app.use('/daily_mission', verifyToken, dailyMissionRoutes);
 app.use('/weekly_mission', verifyToken, weeklyMissionRoutes);
+app.use("/market", verifyToken, marketRoutes);
+
+
 
 // 기본 페이지 및 웹 렌더링 제거
 app.get("/", (req, res) => {
