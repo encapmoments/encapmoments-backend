@@ -6,7 +6,6 @@ const marketController = require("../controllers/marketController");
 // const verifyToken = require("../middlewares/authMiddleware");
 
 router.get("/items", marketController.getItems);
-
 router.get("/items/:item_id",marketController.getOneItem);
 
 
