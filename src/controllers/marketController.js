@@ -38,7 +38,7 @@ exports.getItems = async (req, res) => {
 
 // Item 상세 조회 
 exports.getOneItem = async (req, res) => {
-  const itemId = parseINT(req.params.item_id);
+  const itemId = parseInt(req.params.item_id);
 
   if (isNaN(itemId)) {
     return res.status(400).json({ message: '잘못된 item_id 형식입니다. '});
@@ -57,7 +57,7 @@ exports.getOneItem = async (req, res) => {
         category: true,
         cost: true,
         stock: true,
-        created: true
+        created_at: true
       }
     });
 
@@ -104,7 +104,7 @@ exports.purchaseItem = async (req, res) => {
     });
 
     if(prof.points < item.cost)
-      res.status(400).json({ message : '포인트가 부족합니다.'});
+      return res.status(400).json({ message : '포인트가 부족합니다.'}); //return 추가 
 
 
     const stock = await prisma.gifticon_stock.findFirst({
@@ -120,12 +120,11 @@ exports.purchaseItem = async (req, res) => {
         item_id : true
       }
     });
-```
-    if(!stock) 
-      return res.status(400).json({ message : '재고가 부족합니다.'});
+
+    //if(!stock) 
+    //  return res.status(400).json({ message : '재고가 부족합니다.'});
       
-      어차피 재고 숫자는 위에서 체크하므로 없어도 될 듯
-```
+    //  어차피 재고 숫자는 위에서 체크하므로 없어도 될 듯
 
     const user = await prisma.user_reward.create({
       data: {
@@ -175,22 +174,22 @@ exports.purchaseItem = async (req, res) => {
 exports.getMyPurchases = async (req, res) => {
     try {
     const userId = req.user.id; 
-    const purchases = await prisma.userReward.findMany({
+    const purchases = await prisma.user_reward.findMany({
       where: { user_id: userId },
       include: {
-        item: true,
-      },
+        reward_item: true,
+	gifticon_stock: true
+      }
     });
-
     res.json(purchases.map(p => ({
-      user_reward_id: p.id,
-      item_name: p.item.name,
-      item_image: p.item.image_url,
-      barcode: p.barcode,
-      expires_at: p.expires_at,
-      is_used: p.is_used,
-      purchased_at: p.created_at
-    })));
+   user_reward_id: p.user_reward_id,
+   item_name: p.reward_item.name,
+   item_image: p.reward_item.image_url,
+   barcode: p.gifticon_stock?.barcode || null,
+   expires_at: p.gifticon_stock?.expires_at || null,
+   is_used: p.is_used,
+   purchased_at: p.purchased_at
+   })));
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "구매내역 조회 실패" });
@@ -199,20 +198,14 @@ exports.getMyPurchases = async (req, res) => {
 
 // 기프티콘 사용 처리
 exports.useGifticon = async (req, res) => {
-    try {
+  try {
     const userId = req.user.id;
-    const { user_reward_id } = req.params;
+    const user_reward_id = parseInt(req.params.user_reward_id, 10);
 
-    const updated = await prisma.userReward.updateMany({
-      where: {
-        id: parseInt(user_reward_id, 10),
-        user_id: userId,
-        is_used: false
-      },
-      data: {
-        is_used: true,
-        used_at: new Date()
-      }
+    const now = new Date();
+    const updated = await prisma.user_reward.updateMany({
+      where: { user_reward_id, user_id: userId, is_used: false },
+      data: { is_used: true, used_at: now }
     });
 
     if (updated.count === 0) {
@@ -221,8 +214,8 @@ exports.useGifticon = async (req, res) => {
 
     res.json({
       message: "기프티콘 사용 완료",
-      user_reward_id: parseInt(user_reward_id, 10),
-      used_at: new Date().toISOString()
+      user_reward_id,
+      used_at: now.toISOString()
     });
   } catch (error) {
     console.error(error);
