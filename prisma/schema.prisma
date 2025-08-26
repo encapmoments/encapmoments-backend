@@ -143,7 +143,7 @@ model gifticon_stock {
   barcode     String   @db.VarChar(255)
   image_url   String?  @db.Text
   expires_at  DateTime?
-  is_used     Boolean  @default(false)
+  is_assigned     Boolean  @default(false)
 
   reward_item reward_item @relation(fields: [item_id], references: [item_id])
   user_reward user_reward?
