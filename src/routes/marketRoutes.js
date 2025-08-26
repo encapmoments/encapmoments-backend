@@ -7,7 +7,7 @@ const marketController = require("../controllers/marketController");
 
 router.get("/items", marketController.getItems);
 router.get("/items/:item_id",marketController.getOneItem);
-
+router.post("/market/purchase", marketController.purchaseItem);
 
 module.exports = router;
 
