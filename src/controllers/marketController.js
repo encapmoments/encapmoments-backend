@@ -170,3 +170,62 @@ exports.purchaseItem = async (req, res) => {
 7. 유저 포인트 차감 
 
 */
+
+// 사용자의 구매내역 JSON 응답
+exports.getMyPurchases = async (req, res) => {
+    try {
+    const userId = req.user.id; 
+    const purchases = await prisma.userReward.findMany({
+      where: { user_id: userId },
+      include: {
+        item: true,
+      },
+    });
+
+    res.json(purchases.map(p => ({
+      user_reward_id: p.id,
+      item_name: p.item.name,
+      item_image: p.item.image_url,
+      barcode: p.barcode,
+      expires_at: p.expires_at,
+      is_used: p.is_used,
+      purchased_at: p.created_at
+    })));
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "구매내역 조회 실패" });
+  }
+};
+
+// 기프티콘 사용 처리
+exports.useGifticon = async (req, res) => {
+    try {
+    const userId = req.user.id;
+    const { user_reward_id } = req.params;
+
+    const updated = await prisma.userReward.updateMany({
+      where: {
+        id: parseInt(user_reward_id, 10),
+        user_id: userId,
+        is_used: false
+      },
+      data: {
+        is_used: true,
+        used_at: new Date()
+      }
+    });
+
+    if (updated.count === 0) {
+      return res.status(400).json({ message: "이미 사용했거나 존재하지 않는 기프티콘입니다" });
+    }
+
+    res.json({
+      message: "기프티콘 사용 완료",
+      user_reward_id: parseInt(user_reward_id, 10),
+      used_at: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "기프티콘 사용 처리 실패" });
+  }
+};
