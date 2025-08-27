@@ -6,7 +6,6 @@ const prisma = new PrismaClient();
 // DATABASE_URL(예: MySQL, PostgreSQL) 환경변수를 읽어 DB에 연결
 
 
-
 // 컨트롤러 함수 
 // Item 목록 조회
 exports.getItems = async (req, res) => {
@@ -38,7 +37,7 @@ exports.getItems = async (req, res) => {
 
 // Item 상세 조회 
 exports.getOneItem = async (req, res) => {
-  const itemId = parseInt(req.params.item_id);
+  const itemId = parseINT(req.params.item_id);
 
   if (isNaN(itemId)) {
     return res.status(400).json({ message: '잘못된 item_id 형식입니다. '});
@@ -57,7 +56,7 @@ exports.getOneItem = async (req, res) => {
         category: true,
         cost: true,
         stock: true,
-        created_at: true
+        created: true
       }
     });
 
@@ -83,7 +82,6 @@ exports.purchaseItem = async (req, res) => {
   if(!itemId)
     return res.status(400).json({ message : 'item_id가 필요합니다.'});
 
-
   try{
     const item = await prisma.reward_item.findUnique({
       where : {item_id : itemId},
@@ -97,14 +95,15 @@ exports.purchaseItem = async (req, res) => {
       return res.status(404).json({ message: '해당 item이 존재하지 않습니다.'});
 
     if(item.stock==0)
-      return res.status(500).json({ message: '재고가 없습니다.'});
+      return res.status(400).json({ message: '재고가 없습니다.'});
 
-    const prof = await prisma.profile.findUnique({
+    const profile = await prisma.profile.findUnique({
       where : { id : userId}
     });
+    // profile에 id를 가진 user는 무조건 있는 것으로 간주
 
-    if(prof.points < item.cost)
-      return res.status(400).json({ message : '포인트가 부족합니다.'}); //return 추가 
+    if(profile.points < item.cost)
+      return res.status(400).json({ message : '포인트가 부족합니다.'});
 
 
     const stock = await prisma.gifticon_stock.findFirst({
@@ -121,36 +120,45 @@ exports.purchaseItem = async (req, res) => {
       }
     });
 
-    //if(!stock) 
-    //  return res.status(400).json({ message : '재고가 부족합니다.'});
+    // 재고 숫자가 0이 아니더라도 실제로는 할당할 stock이 없을 수도 있으니까
+    if(!stock) {
+      console.log("reward_item 테이블에선 재고가 있다고 표시되어 있음, 수정 필요")
+      return res.status(400).json({ message : '할당할 재고가 부족합니다' });
       
-    //  어차피 재고 숫자는 위에서 체크하므로 없어도 될 듯
+    }
+    const result = await prisma.$transaction(async (tx) => {
+      const updatedProfile = await tx.profile.update({
+        where: {
+          id: userId
+        },
+        data:{
+            points: { decrement: item.cost}
+        }
+      });
 
-    const user = await prisma.user_reward.create({
-      data: {
-        user_id : userId,
-        item_id : stock.item_id,
-        stock_id : stock.stock_id
-      }
+      await tx.gifticon_stock.update({
+        where : { stock_id : stock.stock_id },
+        data : {
+          is_assigned : true
+        }
+      });
+
+
+      const userReward = await tx.user_reward.create({
+        data: {
+          user_id : userId,
+          item_id : stock.item_id,
+          stock_id : stock.stock_id
+        }
+      });
+      
+      return { updatedProfile, userReward };
     });
 
-    if(!user)
-      return res.status(400).json({ message : 'user_reward 생성에 실패하였습니다'});
-
-    const row = await prisma.profile.update({
-      where: {
-        id: userId
-      },
-      data:{
-          points: { decrement: item.cost}
-      }
+    return res.status(201).json({
+      message : '기프티콘 구매 성공',
+      data: result.userReward
     });
-
-    if(!row)
-      return res.status(404).json({ message : 'reward 차감에 실패하였습니다. '});
-
-    console.log('아이템 구매 성공하였습니다.');
-    return res.status(200).json({ message : '기프티콘 구매 성공', data : row});
 
   } catch( error ){
     console.error('기프티콘 구매 실패', error);
@@ -164,11 +172,13 @@ exports.purchaseItem = async (req, res) => {
 3. 보유 포인트가 cost보다 많은지 확인
 4. 바코드 재고(gifticon_stock) 중 is_used = false인 것 중 1개 할당
 -> stock_id 기준 오름차순으로 조회, item_id가 같고 is_assigned가 false인 첫 번째 stock을 할당
+
+일괄처리
 5. user_reward에 등록
 6. gifticon_stock.is_used = true로 변경
 7. 유저 포인트 차감 
-
 */
+
 
 // 사용자의 구매내역 JSON 응답
 exports.getMyPurchases = async (req, res) => {
