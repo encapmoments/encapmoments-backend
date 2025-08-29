@@ -25,7 +25,9 @@ jobs:
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
-          set -euo pipefail  
+          set -euo pipefail
+          set -x
+          trap 'echo "❌ FAILED at line $LINENO: $BASH_COMMAND"' ERR
 
           cd /home/ec2-user/encapmoments-backend
           git pull origin main
