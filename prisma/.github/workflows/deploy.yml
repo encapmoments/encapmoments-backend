@@ -1,0 +1,37 @@
+name: Deply to EC2, Encapmoments
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: EC2 배포
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 레포지토리 클론
+      uses: actions/checkout@v3
+
+    - name: Create .env file
+      run: |
+        echo "${{ secrets.ENV_FILE }}" > .env 
+
+    - name: EC2 서버로 배포
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.EC2_HOST }}vcz
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          cd /home/ec2-user/encapmoments-backend
+          git pull origin main
+          echo "${{ secrets.ENV_FILE }}" > .env 
+
+          npm ci
+          npx prisma migrate deploy
+          npx prisma generate  
+          
+          pm2 restart encap-backend
+
+
