@@ -20,10 +20,13 @@ jobs:
     - name: EC2 서버로 배포
       uses: appleboy/ssh-action@v1.0.0
       with:
+        script_stop: true   # 실패 즉시 중단
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
+          set -euo pipefail  
+
           cd /home/ec2-user/encapmoments-backend
           git pull origin main
           echo "${{ secrets.ENV_FILE }}" > .env 
@@ -35,4 +38,5 @@ jobs:
           pm2 restart encap-backend
 
 # CD test
+# CD test하자!
 
