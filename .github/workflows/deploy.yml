@@ -13,9 +13,9 @@ jobs:
     - name: 레포지토리 클론
       uses: actions/checkout@v3
 
-    - name: Create .env file
-      run: |
-        echo "${{ secrets.ENV_FILE }}" > .env 
+    #- name: Create .env file
+    #  run: |
+    #    echo "${{ secrets.ENV_FILE }}" > .env 
 
     - name: EC2 서버로 배포
       uses: appleboy/ssh-action@v1.0.0
@@ -29,9 +29,12 @@ jobs:
           set -x
           trap 'echo "❌ FAILED at line $LINENO: $BASH_COMMAND"' ERR
 
-          cd /home/ec2-user/encapmoments-backend
-          git pull origin main
-          echo "${{ secrets.ENV_FILE }}" > .env 
+          APP_DIR=/home/ec2-user/encapmoments-backend
+          BRANCH=main
+          PM2_NAME=encap-backend
+
+          cd "$APP_DIR"
+          git pull origin "$BRANCH"
 
           npm ci
           npx prisma migrate deploy
