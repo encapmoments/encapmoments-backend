@@ -21,6 +21,8 @@ jobs:
       uses: appleboy/ssh-action@v1.0.0
       with:
         script_stop: true   # 실패 즉시 중단
+        timeout: 60s # SSH 접속 시도 제한 시간 (연결 시도 제한) (기본값이 30초)
+        command_timeout: 30m # 서버에 접속한 뒤, 스크립트 실행 시간 제한(명령 실행 제한)
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -28,15 +30,17 @@ jobs:
           set -euo pipefail
           set -x
           trap 'echo "❌ FAILED at line $LINENO: $BASH_COMMAND"' ERR
-
+          port: 22
           APP_DIR=/home/ec2-user/encapmoments-backend
           BRANCH=main
           PM2_NAME=encap-backend
 
           cd "$APP_DIR"
+          git checkout main
           git pull origin "$BRANCH"
 
-          npm ci
+          npm install --prefer-offline --no-audit --no-fund
+          npx prisma migrate status
           npx prisma migrate deploy
           npx prisma generate  
           
