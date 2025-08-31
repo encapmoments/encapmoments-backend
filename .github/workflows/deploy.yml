@@ -36,6 +36,7 @@ jobs:
           PM2_NAME=encap-backend
 
           cd "$APP_DIR"
+          git checkout main
           git pull origin "$BRANCH"
 
           npm install --prefer-offline --no-audit --no-fund
