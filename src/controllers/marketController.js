@@ -136,13 +136,21 @@ exports.purchaseItem = async (req, res) => {
         }
       });
 
+      await tx.reward_item.update({
+        where: {
+          item_id : itemId
+        },
+        data:{
+          stock : { decrement: 1}
+        }
+      });
+
       await tx.gifticon_stock.update({
         where : { stock_id : stock.stock_id },
         data : {
           is_assigned : true
         }
       });
-
 
       const userReward = await tx.user_reward.create({
         data: {
