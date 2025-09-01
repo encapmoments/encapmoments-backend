@@ -37,7 +37,7 @@ exports.getItems = async (req, res) => {
 
 // Item 상세 조회 
 exports.getOneItem = async (req, res) => {
-  const itemId = parseINT(req.params.item_id);
+  const itemId = parseInt(req.params.item_id);
 
   if (isNaN(itemId)) {
     return res.status(400).json({ message: '잘못된 item_id 형식입니다. '});
@@ -56,7 +56,7 @@ exports.getOneItem = async (req, res) => {
         category: true,
         cost: true,
         stock: true,
-        created: true
+        created_at: true
       }
     });
 
