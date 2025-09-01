@@ -43,7 +43,7 @@ app.use("/album", verifyToken, albumRoutes);
 app.use("/album-comment", albumCommentRoutes);
 app.use('/daily_mission', verifyToken, dailyMissionRoutes);
 app.use('/weekly_mission', verifyToken, weeklyMissionRoutes);
-app.use("/market", verifyToken, marketRoutes);
+app.use("/market", marketRoutes);
 
 
 
