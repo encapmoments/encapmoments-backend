@@ -18,7 +18,8 @@ exports.getDailyMissions = async (req, res) => {
           daily_id: true,
           daily_title: true,
           reward: true,
-          expires_at: true
+          expires_at: true,
+	  is_completed: true
         },
         orderBy: {
           created_at: 'asc'
@@ -62,7 +63,8 @@ exports.getDailyMissions = async (req, res) => {
               daily_id: true,
               daily_title: true,
               reward: true,
-              expires_at: true
+              expires_at: true,
+              is_completed: true  // 응답에 is_completed 추가 
             }
           });
   
