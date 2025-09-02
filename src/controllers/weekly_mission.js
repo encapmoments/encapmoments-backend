@@ -74,7 +74,8 @@ function createDallePrompt(title, description, options) {
     colorTone,
     mood,
     composition,
-    backgroundStyle
+    backgroundStyle,
+    memberDesc
   } = options;
 
   return `${title}: ${description}. ` +
