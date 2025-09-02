@@ -120,6 +120,7 @@ exports.generateWeeklyMissions = async (req, res) => {
 - 모든 미션 제목은 15자 이내의 짧고 명확한 문장
 - 모든 미션 설명은 40자 이상 80자 이하의 자연스러운 설명형 문장 (예: '~하는 활동입니다.')
 - 아래 JSON 형식 그대로 응답할 것. 주석이나 추가 설명은 포함하지 마:
+- 미션 설명에서 가족 구성원(나이, 성별) 정보를 알려주고 꼭 구성원만 나온 이미지를 생성해야된다고 출력해줘. 
 
 [
   {
@@ -211,6 +212,7 @@ exports.generateWeeklyMissions = async (req, res) => {
     res.status(500).json({ message: '서버 오류 발생', error: err.message });
   }
 };
+
 
 
 
