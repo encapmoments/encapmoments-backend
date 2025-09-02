@@ -115,7 +115,7 @@ exports.generateWeeklyMissions = async (req, res) => {
       .join(', ');
 
     const gptPrompt = `
-"${text}"라는 상황에서 ${memberDesc}로 구성된 가족을 위한 주간 미션 1개를 아래 조건을 지켜서 JSON으로 출력해줘.
+"${text}"라는 상황에서 ${memberDesc}로 구성된 가족을 위한 주간 미션 3개를 아래 조건을 지켜서 JSON으로 출력해줘.
 
 - 모든 미션 제목은 15자 이내의 짧고 명확한 문장
 - 모든 미션 설명은 40자 이상 80자 이하의 자연스러운 설명형 문장 (예: '~하는 활동입니다.')
@@ -211,5 +211,6 @@ exports.generateWeeklyMissions = async (req, res) => {
     res.status(500).json({ message: '서버 오류 발생', error: err.message });
   }
 };
+
 
 
