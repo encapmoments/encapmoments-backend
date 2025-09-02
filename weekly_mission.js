@@ -166,7 +166,10 @@ exports.generateWeeklyMissions = async (req, res) => {
           size: '1024x1024',
           n: 1
         });
-        return dalleRes.data[0].url;
+        const dalleImageUrl = dalleRes.data[0].url;
+        const s3ImageUrl = await uploadUrlToS3(dalleImageUrl, "mission",  "weekly_mission");
+
+        return s3ImageUrl;
       })
     );
 
@@ -208,4 +211,5 @@ exports.generateWeeklyMissions = async (req, res) => {
     res.status(500).json({ message: '서버 오류 발생', error: err.message });
   }
 };
+
 
