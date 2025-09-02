@@ -84,7 +84,8 @@ function createDallePrompt(title, description, options) {
          `${colorTone}, ` +
          `${mood} mood, ` +
          `${composition}, ` +
-         `${backgroundStyle}.`;
+         `${backgroundStyle},` +
+         `${memberDesc}.`;
 }
 
 
