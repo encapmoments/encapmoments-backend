@@ -68,16 +68,16 @@ exports.getWeeklyMissionDetail = async (req, res) => {
 // 주간 미션 생성
 exports.generateWeeklyMissions = async (req, res) => {
   const userId = req.user.id;
-  const { topic } = req.body;
+  const { text, members } = req.body;
 
-  if (!topic) {
-    return res.status(400).json({ message: '미션 주제를 입력해주세요.' });
+  if (!text || !Array.isArray(members) || members.length === 0) {
+    return res.status(400).json({ message: 'text 또는 members 정보가 부족합니다.' });
   }
 
   try {
     const now = new Date();
 
-    // 만료된 & 완료되지 않은 주간 미션 삭제
+    // 1. 만료된 + 완료되지 않은 주간 미션 삭제
     await prisma.weekly_mission.deleteMany({
       where: {
         id: userId,
@@ -86,12 +86,17 @@ exports.generateWeeklyMissions = async (req, res) => {
       }
     });
 
+    // 2. GPT 프롬프트 생성
+    const memberDesc = members
+      .map(m => `${m.age}세 ${m.gender}`)
+      .join(', ');
 
+    const gptPrompt = `
+"${text}"라는 상황에서 ${memberDesc}로 구성된 가족을 위한 주간 미션 1개를 아래 조건을 지켜서 JSON으로 출력해줘.
 
-    // 1. GPT 프롬프트 생성
-      const prompt = `
-"${topic}"을 주제로 한 주간 미션 3개를 순수한 JSON 형식으로 출력해줘.
-아무 말도 하지 말고 아래 형식으로만 응답해:
+- 모든 미션 제목은 15자 이내의 짧고 명확한 문장
+- 모든 미션 설명은 40자 이상 80자 이하의 자연스러운 설명형 문장 (예: '~하는 활동입니다.')
+- 아래 JSON 형식 그대로 응답할 것. 주석이나 추가 설명은 포함하지 마:
 
 [
   {
@@ -104,11 +109,13 @@ exports.generateWeeklyMissions = async (req, res) => {
 
     const gptRes = await openai.chat.completions.create({
       model: 'gpt-4',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.8
+      messages: [{ role: 'user', content: gptPrompt }],
+      temperature: 0.8,
+      max_tokens: 500,
+      presence_penalty: 0.5
     });
 
-    // 2. 응답 파싱
+    // 3. GPT 응답 파싱
     let missions;
     try {
       missions = JSON.parse(gptRes.choices[0].message.content.trim());
@@ -116,25 +123,35 @@ exports.generateWeeklyMissions = async (req, res) => {
       return res.status(500).json({ message: 'GPT 응답 파싱 실패', error: err });
     }
 
-    // 3. 이미지 생성 (DALL·E)
+    // 4. 이미지 생성 (옵션 기반 프롬프트 사용)
+    const dalleOptions = {
+      style: "a children's book illustration with soft brush strokes",
+      cameraAngle: "eye-level medium shot",
+      resolution: "high resolution, 1024x1024 aspect ratio",
+      colorTone: "pastel colors with warm undertones",
+      mood: "cozy and joyful",
+      composition: "centered composition",
+      backgroundStyle: "simple pastel-colored background"
+    };
+
     const imageUrls = await Promise.all(
       missions.map(async (mission) => {
+        const dallePrompt = createDallePrompt(mission.weekly_title, mission.weekly_description, dalleOptions);
         const dalleRes = await openai.images.generate({
           model: 'dall-e-3',
-          prompt: `${mission.weekly_title} - ${mission.weekly_description}`,
+          prompt: dallePrompt,
           size: '1024x1024',
           n: 1
         });
         const dalleImageUrl = dalleRes.data[0].url;
-        //  S3 업로드
-        const s3ImageUrl = await uploadUrlToS3(dalleImageUrl,"mission",  "weekly_mission");
+        const s3ImageUrl = await uploadUrlToS3(dalleImageUrl, "mission",  "weekly_mission");
 
         return s3ImageUrl;
       })
     );
 
-    // 4. DB 저장
-    const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    // 5. DB 저장
+    const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7일 뒤
 
     const createdMissions = await Promise.all(
       missions.map((m, i) =>
@@ -143,7 +160,7 @@ exports.generateWeeklyMissions = async (req, res) => {
             id: userId,
             weekly_title: m.weekly_title,
             weekly_description: m.weekly_description,
-            weekly_image: imageUrls[i], 
+            weekly_image: imageUrls[i],
             reward: 100,
             is_completed: false,
             created_at: now,
@@ -165,6 +182,7 @@ exports.generateWeeklyMissions = async (req, res) => {
       message: '주간 미션이 성공적으로 생성되었습니다.',
       missions: createdMissions
     });
+
   } catch (err) {
     console.error('주간 미션 생성 실패:', err);
     res.status(500).json({ message: '서버 오류 발생', error: err.message });
