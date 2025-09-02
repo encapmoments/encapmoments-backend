@@ -65,6 +65,29 @@ exports.getWeeklyMissionDetail = async (req, res) => {
   }
 };
 
+// DALL·E 프롬프트 생성 함수
+function createDallePrompt(title, description, options) {
+  const {
+    style,
+    cameraAngle,
+    resolution,
+    colorTone,
+    mood,
+    composition,
+    backgroundStyle
+  } = options;
+
+  return `${title}: ${description}. ` +
+         `In the style of ${style}, ` +
+         `${cameraAngle}, ` +
+         `${resolution}, ` +
+         `${colorTone}, ` +
+         `${mood} mood, ` +
+         `${composition}, ` +
+         `${backgroundStyle}.`;
+}
+
+
 // 주간 미션 생성
 exports.generateWeeklyMissions = async (req, res) => {
   const userId = req.user.id;
